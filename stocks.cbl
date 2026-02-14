@@ -6,9 +6,33 @@
        SPECIAL-NAMES.
            DECIMAL-POINT IS COMMA.
 
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT STK01 ASSIGN TO "stk01.dat"
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS WS-STATUS-STK01.
+
+           SELECT STK02 ASSIGN TO "stk02.dat"
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS WS-STATUS-STK02.
+
        DATA DIVISION.
+       FILE SECTION.
+       FD STK01.
+       01 STK01-REGISTER.
+           03 WFS-HB-COST        PIC 9(1)V99.
+           03 WFS-DESK-COST      PIC 9(1)V99.
+
+       FD STK02.
+       01 STK02-REGISTER.
+         03 WFS-DATA-ANO         PIC 9(2).
+         03 WFS-DATA-MES         PIC 9(2).
+         03 WFS-DATA-DIA         PIC 9(2).
+
+
        WORKING-STORAGE SECTION.
        77 WS-CHK-STOCK          PIC X.
+       77 WS-STATUS-STK01       PIC X(02).
 
        01 CONSTS                PIC 9(1)V99999999.
            78 WS-STOCK-TRF        VALUE 0,00005.
@@ -57,8 +81,8 @@
            05 WS-IRRF           PIC 9(4)V99.
            05 WS-TOTAL-COSTS    PIC 9(7)V99.
            05 WS-BROKE-COST     PIC 9(4)V99.
-           05 WS-HB-COST        PIC 9(1)V99  VALUE 4,90.
-           05 WS-DESK-COST      PIC 9(1)V99  VALUE 0,50.
+           05 WS-HB-COST        PIC 9(1)V99.
+           05 WS-DESK-COST      PIC 9(1)V99.
 
        SCREEN SECTION.
        01 CLEAR-SCREEN BLANK SCREEN.
@@ -72,14 +96,14 @@
            05 LINE  3 COL 27 VALUE "QTY".
            05 LINE  3 COL 31 PIC ZZZZZZ TO WS-QTY HIGHLIGHT.
            05 LINE  3 COL 38 VALUE "PRICE".
-           05 LINE  3 COL 44 PIC ZZZZZZ9,99 TO WS-PRICE HIGHLIGHT.
+           05 LINE  3 COL 44 PIC ZZZZZZZ,ZZ TO WS-PRICE HIGHLIGHT.
            05 LINE  3 COL 55 VALUE "HB".
            05 LINE  3 COL 58 PIC X TO WS-HB AUTO HIGHLIGHT.
            05 LINE  3 COL 60 VALUE "DT".
            05 LINE  3 COL 63 PIC X TO WS-DT AUTO HIGHLIGHT.
 
            05 LINE  5 COL  1 VALUE "HB Brokerage Cost".
-           05 LINE  5 COL 23 PIC ZZ9,99 USING WS-HB-COST HIGHLIGHT.
+           05 LINE  5 COL 23 PIC ZZZ,ZZ USING WS-HB-COST HIGHLIGHT.
            05 LINE  6 COL  1 VALUE "Trading Desk Cost".
            05 LINE  6 COL 25 PIC 9,99 USING WS-DESK-COST HIGHLIGHT.
            05 LINE  6 COL 30 VALUE "%".
@@ -111,6 +135,16 @@
            05 LINE 19 COL 23 PIC Z.ZZ9,99     FROM WS-OUTROS.
 
        PROCEDURE DIVISION.
+       LOAD-DATA.
+           OPEN INPUT STK01.
+           IF WS-STATUS-STK01 IS EQUAL TO "35"
+             PERFORM CREATE-DEFAULT-FILE
+             GO TO LOAD-DATA
+           END-IF.
+           READ STK01.
+           MOVE WFS-HB-COST TO WS-HB-COST.
+           MOVE WFS-DESK-COST TO WS-DESK-COST.
+           CLOSE STK01.
 
        INICIO.
            DISPLAY CLEAR-SCREEN.
@@ -143,7 +177,6 @@
                MULTIPLY WS-NET-OPR BY WS-OPTION-REG GIVING WS-REGISTER
            END-IF.
 
-           
            IF WS-HB = "Y" OR WS-HB = "y"
                MOVE WS-HB-COST TO WS-BROKE-COST
            ELSE
@@ -168,3 +201,10 @@
 
            EXIT.
 
+       CREATE-DEFAULT-FILE.
+           OPEN OUTPUT STK01.
+           MOVE 4,90 TO WFS-HB-COST.
+           MOVE 0,50 TO WFS-DESK-COST.
+           WRITE STK01-REGISTER.
+           CLOSE STK01.
+           EXIT.
