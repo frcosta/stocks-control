@@ -20,7 +20,7 @@
        FILE SECTION.
        FD STK01.
        01 STK01-REGISTER.
-           03 WFS-HB-COST        PIC 9(1)V99.
+           03 WFS-HB-COST        PIC 9(2)V99.
            03 WFS-DESK-COST      PIC 9(1)V99.
 
        FD STK02.
@@ -33,6 +33,9 @@
        WORKING-STORAGE SECTION.
        77 WS-CHK-STOCK          PIC X.
        77 WS-STATUS-STK01       PIC X(02).
+       77 WS-STATUS-STK02       PIC X(02).
+       77 WS-SELECT-OPTION      PIC X.
+       77 WS-DRAWLINE PIC X(80) VALUE ALL "-".
 
        01 CONSTS                PIC 9(1)V99999999.
            78 WS-STOCK-TRF        VALUE 0,00005.
@@ -81,58 +84,90 @@
            05 WS-IRRF           PIC 9(4)V99.
            05 WS-TOTAL-COSTS    PIC 9(7)V99.
            05 WS-BROKE-COST     PIC 9(4)V99.
-           05 WS-HB-COST        PIC 9(1)V99.
+           05 WS-HB-COST        PIC 9(2)V99.
            05 WS-DESK-COST      PIC 9(1)V99.
 
        SCREEN SECTION.
        01 CLEAR-SCREEN BLANK SCREEN.
-       01 MAIN-SCREEN.
-           05 LINE 1 COL 24 VALUE "=== STOCK COST CALCULATION ==="
-               HIGHLIGHT.
-           05 LINE  3 COL  1 VALUE "ORDER".
-           05 LINE  3 COL  7 PIC X TO WS-ORDER AUTO HIGHLIGHT.
-           05 LINE  3 COL  9 VALUE "TICKER".
-           05 LINE  3 COL 16 PIC X(10) TO WS-TICKER HIGHLIGHT.
-           05 LINE  3 COL 27 VALUE "QTY".
-           05 LINE  3 COL 31 PIC ZZZZZZ TO WS-QTY HIGHLIGHT.
-           05 LINE  3 COL 38 VALUE "PRICE".
-           05 LINE  3 COL 44 PIC ZZZZZZZ,ZZ TO WS-PRICE HIGHLIGHT.
-           05 LINE  3 COL 55 VALUE "HB".
-           05 LINE  3 COL 58 PIC X TO WS-HB AUTO HIGHLIGHT.
-           05 LINE  3 COL 60 VALUE "DT".
-           05 LINE  3 COL 63 PIC X TO WS-DT AUTO HIGHLIGHT.
+       01 MENU-PRINCIPAL-SCREEN.
+           05 LINE 1       COL  2 VALUE "Stocks Control Center".
+           05 LINE PLUS 2  COL  2 VALUE "Main Menu".
+           05 LINE PLUS 2  COL  2 VALUE "1. Reg. Operation Record".
+           05 LINE PLUS 1  COL  2 VALUE "2. Cancel Registration".
+           05 LINE PLUS 1  COL  2 VALUE "3. Asset custody".
+           05 LINE PLUS 1  COL  2 VALUE "4. Close month / IR Calc".
+           05 LINE PLUS 1  COL  2 VALUE "5. Define initial position".
+           05 LINE PLUS 1  COL  2 VALUE "6. Exit".
+           05 LINE PLUS 2  COL  2 VALUE "Select your option".
+           05              COL PLUS 2 PIC X TO WS-SELECT-OPTION AUTO.
+       01 MENU-INPUT-CONFIRM.
+           05 LINE 23     COL 1 VALUE "Confirm (Y/N) ?" HIGHLIGHT.
+           05 LINE 23     COL PLUS 2 PIC X TO WS-SELECT-OPTION AUTO.
+       01 COST-CALC-SCREEN.
+           05 LINE 1      COL 1 FROM WS-DRAWLINE LOWLIGHT.
+           05 LINE 2      COL 1 VALUE "DATE" HIGHLIGHT.
+           05             COL PLUS 2 PIC 99
+                                     USING WS-DIA AUTO.
+           05             COL PLUS 1 VALUE "/".
+           05             COL PLUS 1 PIC 99
+                                     USING WS-MES AUTO.
+           05             COL PLUS 1 VALUE "/".
+           05             COL PLUS 1 PIC 99
+                                     USING WS-ANO AUTO.
+           05             COL PLUS 2 VALUE "ORDER" HIGHLIGHT.
+           05             COL PLUS 2 PIC X
+                                     USING WS-ORDER AUTO LOWLIGHT.
+           05             COL PLUS 2 VALUE "TICKER" HIGHLIGHT.
+           05             COL PLUS 2 PIC X(10)
+                                     USING WS-TICKER.
+           05             COL PLUS 2 VALUE "QTY" HIGHLIGHT.
+           05             COL PLUS 2 PIC ZZZZZZ 
+                                     USING WS-QTY.
+           05             COL PLUS 2 VALUE "PRICE" HIGHLIGHT.
+           05             COL PLUS 2 PIC ZZZZZZZ,ZZ
+                                     USING WS-PRICE.
+           05             COL PLUS 4 VALUE "HB" HIGHLIGHT.
+           05             COL PLUS 2 PIC X
+                                     USING WS-HB AUTO.
+           05             COL PLUS 2 VALUE "DT" HIGHLIGHT.
+           05             COL PLUS 2 PIC X
+                                     USING WS-DT AUTO.
+           05 LINE PLUS 1 COL 1      FROM WS-DRAWLINE LOWLIGHT.
 
-           05 LINE  5 COL  1 VALUE "HB Brokerage Cost".
-           05 LINE  5 COL 23 PIC ZZZ,ZZ USING WS-HB-COST HIGHLIGHT.
-           05 LINE  6 COL  1 VALUE "Trading Desk Cost".
-           05 LINE  6 COL 25 PIC 9,99 USING WS-DESK-COST HIGHLIGHT.
-           05 LINE  6 COL 30 VALUE "%".
+           05 LINE  PLUS 2 COL  1 VALUE "HB Brokerage Cost".
+           05              COL 24 PIC ZZ,ZZ USING WS-HB-COST HIGHLIGHT.
+           05 LINE  PLUS 1 COL  1 VALUE "Trading Desk Cost".
+           05              COL 25 PIC 9,99 USING WS-DESK-COST HIGHLIGHT.
+           05              COL 30 VALUE "%".
 
-           05 LINE  8 COL  1 VALUE "CLEARING" HIGHLIGHT.
-           05 LINE  8 COL 40 VALUE "EXCHANGE" HIGHLIGHT.
-           05 LINE 10 COL  1 VALUE "Net Operational.:".
-           05 LINE 10 COL 40 VALUE "Transaction Fee.:".
-           05 LINE 11 COL 40 VALUE "TTA.............:".
+           05 LINE  PLUS 2 COL  1 VALUE "CLEARING"
+                                  HIGHLIGHT UNDERLINE.
+           05              COL 40 VALUE "EXCHANGE" HIGHLIGHT UNDERLINE.
+           05 LINE  PLUS 2 COL  1 VALUE "Net Operational.:" LOWLIGHT.
+           05              COL 19 PIC Z.ZZZ.ZZ9,99 FROM WS-NET-OPR.
+           05              COL 40 VALUE "Transaction Fee.:" LOWLIGHT.
+           05              COL 58 PIC Z.ZZZ.ZZ9,99 FROM WS-TR-FEE.
+           05 LINE  PLUS 1 COL  1 VALUE "Liquidity Tax...:" LOWLIGHT.
+           05              COL 23 PIC Z.ZZ9,99     FROM WS-LIQUIDITY.
+           05              COL 40 VALUE "TTA.............:" LOWLIGHT.
+           05              COL 62 PIC Z.ZZ9,99     FROM WS-TTA.
+           05 LINE  PLUS 1 COL  1 VALUE "Register Tax....:" LOWLIGHT.
+           05              COL 23 PIC Z.ZZ9,99     FROM WS-REGISTER.
 
-           05 LINE 11 COL  1 VALUE "Liquidity Tax...:".
-           05 LINE 12 COL  1 VALUE "Register Tax....:".
-           05 LINE 14 COL  1 VALUE "OPERATIONAL COSTS" HIGHLIGHT.
-           05 LINE 16 COL  1 VALUE "Operational Tax.:".
-           05 LINE 17 COL  1 VALUE "Taxes...........:".
-           05 LINE 18 COL  1 VALUE "IRRF............:".
-           05 LINE 19 COL  1 VALUE "Others..........:".
-           05 LINE 21 COL  1 VALUE "Total Costs / Expenses:".
+           05 LINE  PLUS 2 COL  1 VALUE "OPERATIONAL COSTS" HIGHLIGHT
+                                  UNDERLINE.
+           05 LINE  PLUS 2 COL  1 VALUE "Operational Tax.:" LOWLIGHT.
+           05              COL 23 PIC Z.ZZ9,99     FROM WS-BROKE-COST.
+           05 LINE  PLUS 1 COL  1 VALUE "Taxes...........:" LOWLIGHT.
+           05              COL 23 PIC Z.ZZ9,99     FROM WS-TOT-TX.
+           05 LINE  PLUS 1 COL  1 VALUE "IRRF............:" LOWLIGHT.
+           05              COL 23 PIC Z.ZZ9,99     FROM WS-IRRF.
+           05 LINE  PLUS 1 COL  1 VALUE "Others..........:" LOWLIGHT.
+           05              COL 23 PIC Z.ZZ9,99     FROM WS-OUTROS.
+           05 LINE  PLUS 2 COL  1 VALUE "Total Costs / Expenses:".
 
-
-           05 LINE 10 COL 19 PIC Z.ZZZ.ZZ9,99 FROM WS-NET-OPR.
-           05 LINE 10 COL 58 PIC Z.ZZZ.ZZ9,99 FROM WS-TR-FEE.
-           05 LINE 11 COL 23 PIC Z.ZZ9,99     FROM WS-LIQUIDITY.
-           05 LINE 11 COL 62 PIC Z.ZZ9,99     FROM WS-TTA.
-           05 LINE 12 COL 23 PIC Z.ZZ9,99     FROM WS-REGISTER.
-           05 LINE 16 COL 23 PIC Z.ZZ9,99     FROM WS-BROKE-COST.
-           05 LINE 17 COL 23 PIC Z.ZZ9,99     FROM WS-TOT-TX.
-           05 LINE 18 COL 23 PIC Z.ZZ9,99     FROM WS-IRRF.
-           05 LINE 19 COL 23 PIC Z.ZZ9,99     FROM WS-OUTROS.
+           05 LINE 22      COL 1 FROM WS-DRAWLINE LOWLIGHT.
+           05 LINE 24      COL 1 FROM WS-DRAWLINE LOWLIGHT.
 
        PROCEDURE DIVISION.
        LOAD-DATA.
@@ -146,13 +181,49 @@
            MOVE WFS-DESK-COST TO WS-DESK-COST.
            CLOSE STK01.
 
+           ACCEPT WS-DATA FROM DATE.
+ 
        INICIO.
+           PERFORM UNTIL WS-SELECT-OPTION = '6' 
+              DISPLAY CLEAR-SCREEN
+              DISPLAY MENU-PRINCIPAL-SCREEN
+              ACCEPT MENU-PRINCIPAL-SCREEN
+              EVALUATE WS-SELECT-OPTION
+                  WHEN '1'
+                      PERFORM REG-OPERATION
+                      MOVE SPACE TO WS-SELECT-OPTION
+                  WHEN '6'
+                      DISPLAY CLEAR-SCREEN
+                      GO TO ENDPROGRAM
+              END-EVALUATE
+           END-PERFORM
+           GO TO ENDPROGRAM.
+       
+       REG-OPERATION.
+           PERFORM CLEAR-LOCAL-FIELDS.
            DISPLAY CLEAR-SCREEN.
-           DISPLAY MAIN-SCREEN.
-           ACCEPT MAIN-SCREEN.
+           DISPLAY COST-CALC-SCREEN.
+           ACCEPT COST-CALC-SCREEN.
            PERFORM CALCULA.
-           DISPLAY MAIN-SCREEN.
-       STOP RUN.
+
+      **** Check change for Home Broker Cost or Desk Cost change
+      **** and update the default values for both on file
+           IF WS-HB-COST NOT = WFS-HB-COST 
+               OR WS-DESK-COST NOT = WFS-DESK-COST
+               PERFORM UPDATE-BROKE-COST
+           END-IF.
+
+           DISPLAY COST-CALC-SCREEN.
+           DISPLAY MENU-INPUT-CONFIRM.
+           ACCEPT MENU-INPUT-CONFIRM.
+
+           MOVE SPACE TO WS-SELECT-OPTION.
+           PERFORM UNTIL WS-SELECT-OPTION = "Y" OR "N"
+               DISPLAY MENU-INPUT-CONFIRM
+               ACCEPT MENU-INPUT-CONFIRM
+           END-PERFORM.
+       ENDPROGRAM.
+           STOP RUN.
 
        CALCULA.
       **** Check if ticker represents a stock or an option
@@ -208,3 +279,20 @@
            WRITE STK01-REGISTER.
            CLOSE STK01.
            EXIT.
+
+       UPDATE-BROKE-COST.
+           OPEN OUTPUT STK01.
+           MOVE WS-HB-COST TO WFS-HB-COST.
+           MOVE WS-DESK-COST TO WFS-DESK-COST.
+           WRITE STK01-REGISTER.
+           CLOSE STK01.
+           EXIT.
+
+       CLEAR-LOCAL-FIELDS.
+           MOVE SPACES TO WS-ORDER WS-TICKER WS-HB WS-DT.
+           MOVE ZEROES TO WS-QTY WS-PRICE.
+           MOVE ZEROES TO WS-NET-OPR WS-TR-FEE WS-LIQUIDITY WS-TTA 
+                          WS-REGISTER WS-BROKE-COST WS-TOT-TX WS-IRRF
+                          WS-OUTROS.
+           EXIT.
+
