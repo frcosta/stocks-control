@@ -8,29 +8,18 @@
 
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT STK01 ASSIGN TO "stk01.dat"
-           ORGANIZATION IS LINE SEQUENTIAL
-           FILE STATUS IS WS-STATUS-STK01.
-
-           SELECT STK02 ASSIGN TO "custody.dat"
-           ORGANIZATION IS INDEXED 
-           ACCESS MODE IS DYNAMIC
-           RECORD KEY IS WFS-STK02-TICKER
-           FILE STATUS IS WS-STATUS-STK02.
+           COPY 'control_stk01'.
+           COPY 'control_custody'.
+           COPY 'control_register'.
 
        DATA DIVISION.
        FILE SECTION.
        FD STK01.
-       01 STK01-REGISTER.
-           03 WFS-HB-COST        PIC 9(02)V99.
-           03 WFS-DESK-COST      PIC 9(01)V99.
-
+           COPY 'stk01'.
        FD STK02.
-       01 STK02-REGISTER.
-           03 WFS-STK02-TICKER     PIC X(10).
-           03 WFS-STK02-QTY        PIC 9(06).
-           03 WFS-STK02-PMA        PIC 9(04)V99.
-           03 WFS-STK02-BALANCE    PIC 9(07)V99.
+           COPY 'custody'.
+       FD STK03.
+           COPY 'register'.
 
        WORKING-STORAGE SECTION.
        77 WS-LN                 PIC 9(02).
@@ -74,6 +63,10 @@
            05 WS-ANO            PIC 9(2).
            05 WS-MES            PIC 9(2).
            05 WS-DIA            PIC 9(2).
+       01 WS-TIME.
+           05 WS-HORA           PIC 9(2).
+           05 WS-MINUTO         PIC 9(2).
+           05 WS-SEGUNDO        PIC 9(2).
        01 WS-STOCK.
            05 WS-ORDER          PIC X.
            05 WS-TICKER         PIC X(10).
@@ -100,6 +93,7 @@
            05 WS-TR-FEE         PIC 9(7)V99.
            05 WS-TTA            PIC 9(7)V99.
        01 WS-OTHERS.
+           05 WS-KEY            PIC 9(12).
            05 WS-OPERATIONAL    PIC 9(4)V99.
            05 WS-AMOUNT         PIC 9(6).
            05 WS-STK02-AMOUNT   PIC 9(6).
@@ -117,10 +111,10 @@
        01 MENU-PRINCIPAL-SCREEN.
            05 LINE 1       COL  2 VALUE "Stocks Control Center".
            05 LINE PLUS 2  COL  2 VALUE "Main Menu".
-           05 LINE PLUS 2  COL  2 VALUE "1. Reg. Operation Record".
-           05 LINE PLUS 1  COL  2 VALUE "2. Cancel Registration".
+           05 LINE PLUS 2  COL  2 VALUE "1. Registration of Custody".
+           05 LINE PLUS 1  COL  2 VALUE "2. BUY/SELL Operation".
            05 LINE PLUS 1  COL  2 VALUE "3. Asset custody".
-           05 LINE PLUS 1  COL  2 VALUE "4. Close month / IR Calc".
+           05 LINE PLUS 1  COL  2 VALUE "4. Sort registers".
            05 LINE PLUS 1  COL  2 VALUE "5. Define initial position".
            05 LINE PLUS 1  COL  2 VALUE "6. Exit".
            05 LINE PLUS 2  COL  2 VALUE "Select your option".
@@ -244,9 +238,14 @@
                   WHEN '1'
                       PERFORM REG-OPERATION
                       MOVE SPACE TO WS-SELECT-OPTION
+                  WHEN '2'
+                      PERFORM BUYSELL-REG
+                      MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '3'
                       PERFORM LST-CUSTODY
                       MOVE SPACE TO WS-SELECT-OPTION
+                  WHEN '4'
+                      CALL 'SORTREG'
                   WHEN '6'
                       DISPLAY CLEAR-SCREEN
                       GO TO ENDPROGRAM
@@ -276,6 +275,30 @@
            IF WS-SELECT-OPTION = "Y" OR WS-SELECT-OPTION = "y"
               PERFORM UPD-CUSTODY 
            END-IF.
+
+       BUYSELL-REG.
+           PERFORM CLEAR-LOCAL-FIELDS.
+           DISPLAY CLEAR-SCREEN.
+           DISPLAY COST-CALC-SCREEN.
+           ACCEPT COST-CALC-SCREEN.
+           PERFORM CALCULA.
+
+      **** Check change for Home Broker Cost or Desk Cost change
+      **** and update the default values for both on file
+           IF WS-HB-COST NOT = WFS-HB-COST 
+               OR WS-DESK-COST NOT = WFS-DESK-COST
+               PERFORM UPDATE-BROKE-COST
+           END-IF.
+
+           DISPLAY COST-CALC-SCREEN.
+
+           DISPLAY MENU-INPUT-CONFIRM.
+           MOVE SPACE TO WS-SELECT-OPTION.
+           ACCEPT MENU-INPUT-CONFIRM.
+           IF WS-SELECT-OPTION = "Y" OR WS-SELECT-OPTION = "y"
+              PERFORM UPD-REGISTER 
+           END-IF.
+
 
        ENDPROGRAM.
            STOP RUN.
@@ -430,5 +453,38 @@
            DISPLAY "Total Balance" AT LINE WS-LN COLUMN 1.
            DISPLAY WS-STK02-TOT-BALANCE-MASK   AT LINE WS-LN COLUMN 37.
            ACCEPT WS-SELECT-OPTION AT LINE 23 COLUMN 80.
+           EXIT.
+
+       UPD-REGISTER.
+
+           ACCEPT WS-TIME FROM TIME.
+           STRING 
+              WS-ANO
+              WS-MES
+              WS-DIA
+              WS-HORA
+              WS-MINUTO
+              WS-SEGUNDO
+              DELIMITED BY SIZE
+              INTO WS-KEY
+           END-STRING.
+
+           OPEN EXTEND STK03.
+           IF WS-STATUS-STK03 = "35"
+               OPEN OUTPUT STK03
+           END-IF.
+
+           MOVE WS-KEY         TO STK03-KEY
+           MOVE WS-ORDER       TO STK03-ORDER.
+           MOVE WS-TICKER      TO STK03-TICKER.
+           MOVE WS-QTY         TO STK03-QTY.
+           MOVE WS-PRICE       TO STK03-PRICE.
+           MOVE WS-IRRF        TO STK03-IRRF.
+           MOVE WS-TOTAL-COSTS TO STK03-COST.
+           MOVE WS-NET         TO STK03-NET.
+           MOVE WS-PM          TO STK03-AVPRICE.
+
+           WRITE STK03-REGISTER.
+           CLOSE STK03.
            EXIT.
 
