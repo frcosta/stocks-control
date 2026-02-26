@@ -31,7 +31,8 @@
        77 WS-STATUS-STK04       PIC X(02).
        77 WS-SELECT-OPTION      PIC X.
        77 WS-SYSTEM-TIME        PIC 9(08).
-       77 WS-DRAWLINE PIC X(80) VALUE ALL "-".
+       77 WS-DRAWLINE          PIC X(80) VALUE ALL "-".
+       77 WS-BLANK             PIC X(76) VALUE ALL " ".
 
        01 CONSTS                PIC 9(1)V99999999.
            78 WS-STOCK-TRF        VALUE 0,00005.
@@ -109,8 +110,8 @@
        SCREEN SECTION.
        01 CLEAR-SCREEN BLANK SCREEN.
        01 MENU-PRINCIPAL-SCREEN.
-           05 LINE 1       COL  2 VALUE "Stocks Control Center".
-           05 LINE PLUS 2  COL  2 VALUE "Main Menu".
+           05 LINE 1       COL  2 VALUE "Controle de portfolio".
+           05 LINE PLUS 2  COL  2 VALUE "Menu Principal".
            05 LINE PLUS 2  COL  2 VALUE "1. Registration of Custody".
            05 LINE PLUS 1  COL  2 VALUE "2. BUY/SELL Operation".
            05 LINE PLUS 1  COL  2 VALUE "3. Asset custody".
@@ -119,6 +120,32 @@
            05 LINE PLUS 1  COL  2 VALUE "6. Exit".
            05 LINE PLUS 2  COL  2 VALUE "Select your option".
            05              COL PLUS 2 PIC X TO WS-SELECT-OPTION AUTO.
+       01 MENU-PRINCIPAL2-SCREEN.
+          05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
+          05 LINE 1  COL 60 VALUE "CONTROLE DE PORTFOLIO"
+                                  HIGHLIGHT UNDERLINE. 
+          05 LINE 2  COL 5 VALUE "Menu Principal"
+                                  HIGHLIGHT.
+
+          05 LINE 4  COL 5 VALUE "Configuracoes Iniciais" UNDERLINE. 
+          05 LINE 5  COL 5 VALUE "a) Definir custodia inicial".
+          05 LINE 6  COL 5 VALUE "b) Definir prejuizos acumulados".
+          05 LINE 7  COL 5 VALUE "c) Definir data inicial".
+          05 LINE 9  COL 5 VALUE "Lancamentos" UNDERLINE.
+          05 LINE 10 COL 5 VALUE "1.Lancar ordens de compra e venda".
+          05 LINE 11 COL 5 VALUE "2.Listar ordens".
+          05 LINE 12 COL 5 VALUE "3.Excluir ordem".
+          05 LINE 14 COL 5 VALUE "Imposto de renda" UNDERLINE.
+          05 LINE 15 COL 5 VALUE "4.Fechar mes".
+          05 LINE 16 COL 5 VALUE "5.Acusar pagamento do imposto".
+          05 LINE 18 COL 5 VALUE "Area de Trabalho" UNDERLINE.
+          05 LINE 19 COL 5 VALUE "6.Iniciar novo ano fiscal".
+          05 LINE 20 COL 5 VALUE "7.Fechar ano fiscal".
+          05 LINE 21 COL 5 VALUE "8.Encerrar sistema".
+          05 LINE 23 COL 5 VALUE "Selecione opcao" HIGHLIGHT.
+          05 LINE 23 COL 21 PIC X TO WS-SELECT-OPTION AUTO.
+          05 LINE 24 COL 5 PIC X(76) FROM WS-BLANK UNDERLINE. 
+ 
        01 MENU-INPUT-CONFIRM.
            05 LINE 23    COL 1 VALUE "Do you confirm this opp (Y/N) ?"
                                HIGHLIGHT.
@@ -230,18 +257,18 @@
            ACCEPT WS-DATA FROM DATE.
 
        INICIO.
-           PERFORM UNTIL WS-SELECT-OPTION = '6' 
+           PERFORM UNTIL WS-SELECT-OPTION = '8' 
               DISPLAY CLEAR-SCREEN
-              DISPLAY MENU-PRINCIPAL-SCREEN
-              ACCEPT MENU-PRINCIPAL-SCREEN
+              DISPLAY MENU-PRINCIPAL2-SCREEN
+              ACCEPT MENU-PRINCIPAL2-SCREEN
               EVALUATE WS-SELECT-OPTION
-                  WHEN '1'
+                  WHEN 'a'
                       PERFORM REG-OPERATION
                       MOVE SPACE TO WS-SELECT-OPTION
-                  WHEN '2'
+                  WHEN '1'
                       PERFORM BUYSELL-REG
                       MOVE SPACE TO WS-SELECT-OPTION
-                  WHEN '3'
+                  WHEN '2'
                       PERFORM LST-CUSTODY
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '4'
