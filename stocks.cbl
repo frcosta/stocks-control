@@ -22,6 +22,8 @@
            COPY 'register'.
 
        WORKING-STORAGE SECTION.
+       77 WS-DELAY              PIC 9V9999 VALUE 2,5. *> 2,5 seg
+       77 WS-MSG                PIC X(76)  VALUE SPACES.
        77 WS-LN                 PIC 9(02).
        77 WS-CHAVE-PRIMARIA     PIC X(14).
        77 WS-CHK-STOCK          PIC X.
@@ -31,7 +33,7 @@
        77 WS-STATUS-STK04       PIC X(02).
        77 WS-SELECT-OPTION      PIC X.
        77 WS-SYSTEM-TIME        PIC 9(08).
-       77 WS-DRAWLINE          PIC X(80) VALUE ALL "-".
+       77 WS-DRAWLINE          PIC X(80) VALUE ALL "_".
        77 WS-BLANK             PIC X(76) VALUE ALL " ".
 
        01 CONSTS                PIC 9(1)V99999999.
@@ -109,138 +111,121 @@
 
        SCREEN SECTION.
        01 CLEAR-SCREEN BLANK SCREEN.
-       01 MENU-PRINCIPAL-SCREEN.
-           05 LINE 1       COL  2 VALUE "Controle de portfolio".
-           05 LINE PLUS 2  COL  2 VALUE "Menu Principal".
-           05 LINE PLUS 2  COL  2 VALUE "1. Registration of Custody".
-           05 LINE PLUS 1  COL  2 VALUE "2. BUY/SELL Operation".
-           05 LINE PLUS 1  COL  2 VALUE "3. Asset custody".
-           05 LINE PLUS 1  COL  2 VALUE "4. Sort registers".
-           05 LINE PLUS 1  COL  2 VALUE "5. Define initial position".
-           05 LINE PLUS 1  COL  2 VALUE "6. Exit".
-           05 LINE PLUS 2  COL  2 VALUE "Select your option".
-           05              COL PLUS 2 PIC X TO WS-SELECT-OPTION AUTO.
+       01 PRT-MSG.
+           05 LINE 23 COL 5 PIC X(76) FROM WS-MSG FOREGROUND-COLOR 3
+                                                  HIGHLIGHT.
        01 MENU-PRINCIPAL2-SCREEN.
           05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
-          05 LINE 1  COL 60 VALUE "CONTROLE DE PORTFOLIO"
-                                  HIGHLIGHT UNDERLINE. 
-          05 LINE 2  COL 5 VALUE "Menu Principal"
-                                  HIGHLIGHT.
+          05 LINE 1  COL 60 VALUE "CONTROLE DE PORTFOLIO" UNDERLINE
+                                                          HIGHLIGHT. 
+          05 LINE 2  COL 5 VALUE "Menu Principal" HIGHLIGHT.
 
-          05 LINE 4  COL 5 VALUE "Configuracoes Iniciais" UNDERLINE. 
+          05 LINE 4  COL 5 VALUE "Configuracoes Iniciais" UNDERLINE 
+                                  FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 5  COL 5 VALUE "a) Definir custodia inicial".
           05 LINE 6  COL 5 VALUE "b) Definir prejuizos acumulados".
           05 LINE 7  COL 5 VALUE "c) Definir data inicial".
-          05 LINE 9  COL 5 VALUE "Lancamentos" UNDERLINE.
+          05 LINE 9  COL 5 VALUE "Lancamentos" UNDERLINE
+                                  FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 10 COL 5 VALUE "1.Lancar ordens de compra e venda".
           05 LINE 11 COL 5 VALUE "2.Listar ordens".
           05 LINE 12 COL 5 VALUE "3.Excluir ordem".
-          05 LINE 14 COL 5 VALUE "Imposto de renda" UNDERLINE.
+          05 LINE 14 COL 5 VALUE "Imposto de renda" UNDERLINE
+                                  FOREGROUND-COLOR 1 HIGHLIGHT.
+
           05 LINE 15 COL 5 VALUE "4.Fechar mes".
           05 LINE 16 COL 5 VALUE "5.Acusar pagamento do imposto".
-          05 LINE 18 COL 5 VALUE "Area de Trabalho" UNDERLINE.
+          05 LINE 18 COL 5 VALUE "Area de Trabalho" UNDERLINE
+                                  FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 19 COL 5 VALUE "6.Iniciar novo ano fiscal".
           05 LINE 20 COL 5 VALUE "7.Fechar ano fiscal".
           05 LINE 21 COL 5 VALUE "8.Encerrar sistema".
-          05 LINE 23 COL 5 VALUE "Selecione opcao" HIGHLIGHT.
+          05 LINE 23 COL 5 VALUE "Selecione opcao"
+                                  FOREGROUND-COLOR 3 HIGHLIGHT.
           05 LINE 23 COL 21 PIC X TO WS-SELECT-OPTION AUTO.
           05 LINE 24 COL 5 PIC X(76) FROM WS-BLANK UNDERLINE. 
  
        01 MENU-INPUT-CONFIRM.
-           05 LINE 23    COL 1 VALUE "Do you confirm this opp (Y/N) ?"
-                               HIGHLIGHT.
+           05 LINE 23    COL 5 VALUE "Confirma lancamento (S/N) ?"
+                                  FOREGROUND-COLOR 3 HIGHLIGHT.
            05 LINE 23    COL PLUS 2 PIC X TO WS-SELECT-OPTION.
        01 LIST-CUSTODY.
-           05 LINE 1   COL 1 FROM WS-DRAWLINE LOWLIGHT.
-           05 LINE 1   COL 1 VALUE "Custody Report  ".
-           05 LINE 3   COL 1 VALUE "TICKER" HIGHLIGHT UNDERLINE.
-           05 LINE 3   COL 17 VALUE "QTY" HIGHLIGHT UNDERLINE.
-           05 LINE 3   COL 28 VALUE "PMA" HIGHLIGHT UNDERLINE.
-           05 LINE 3   COL 42 VALUE "BALANCE" HIGHLIGHT UNDERLINE.
-           05 LINE 22  COL 1 FROM WS-DRAWLINE LOWLIGHT.
-           05 LINE 24  COL 1 FROM WS-DRAWLINE LOWLIGHT.
+           05 LINE 1  COL 1 FROM WS-DRAWLINE LOWLIGHT.
+           05 LINE 1  COL 1 VALUE "Custody Report  ".
+           05 LINE 3  COL 1 VALUE "TICKER" HIGHLIGHT UNDERLINE.
+           05 LINE 3  COL 17 VALUE "QTY" HIGHLIGHT UNDERLINE.
+           05 LINE 3  COL 28 VALUE "PMA" HIGHLIGHT UNDERLINE.
+           05 LINE 3  COL 42 VALUE "BALANCE" HIGHLIGHT UNDERLINE.
+           05 LINE 22 COL 1 FROM WS-DRAWLINE LOWLIGHT.
+           05 LINE 24 COL 1 FROM WS-DRAWLINE LOWLIGHT.
        01 COST-CALC-SCREEN.
-           05 LINE 1      COL 1 FROM WS-DRAWLINE LOWLIGHT.
-           05 LINE 2      COL 1 VALUE "DATE" HIGHLIGHT.
-           05             COL PLUS 2 PIC 99
-                                     USING WS-DIA AUTO.
-           05             COL PLUS 1 VALUE "/".
-           05             COL PLUS 1 PIC 99
-                                     USING WS-MES AUTO.
-           05             COL PLUS 1 VALUE "/".
-           05             COL PLUS 1 PIC 99
-                                     USING WS-ANO AUTO.
-           05             COL PLUS 2 VALUE "ORDER" HIGHLIGHT.
-           05             COL PLUS 2 PIC X
-                                     USING WS-ORDER AUTO LOWLIGHT.
-           05             COL PLUS 2 VALUE "TICKER" HIGHLIGHT.
-           05             COL PLUS 2 PIC X(10)
-                                     USING WS-TICKER.
-           05             COL PLUS 2 VALUE "QTY" HIGHLIGHT.
-           05             COL PLUS 2 PIC ZZZZZZ 
-                                     USING WS-QTY.
-           05             COL PLUS 2 VALUE "PRICE" HIGHLIGHT.
-           05             COL PLUS 2 PIC ZZZZZZ9,99
-                                     USING WS-PRICE.
-           05             COL PLUS 4 VALUE "HB" HIGHLIGHT.
-           05             COL PLUS 2 PIC X
-                                     USING WS-HB AUTO.
-           05             COL PLUS 2 VALUE "DT" HIGHLIGHT.
-           05             COL PLUS 2 PIC X
-                                     USING WS-DT AUTO.
-           05 LINE PLUS 1 COL 1      FROM WS-DRAWLINE LOWLIGHT.
+           05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
+           05 LINE 1  COL 65 VALUE "CUSTODIA INICIAL"
+                                   HIGHLIGHT UNDERLINE. 
+           05 LINE 3  COL 5 PIC 99 USING WS-DIA AUTO.
+           05         COL PLUS 1 VALUE "/".
+           05         COL PLUS 1 PIC 99 USING WS-MES AUTO.
+           05         COL PLUS 1 VALUE "/".
+           05         COL PLUS 1 PIC 99 USING WS-ANO AUTO.
+           05         COL PLUS 2 VALUE "ORDEM" HIGHLIGHT.
+           05         COL PLUS 2 PIC X USING WS-ORDER AUTO LOWLIGHT.
+           05         COL PLUS 2 VALUE "TICKER" HIGHLIGHT.
+           05         COL PLUS 2 PIC X(10) USING WS-TICKER.
+           05         COL PLUS 2 VALUE "QTD" HIGHLIGHT.
+           05         COL PLUS 2 PIC ZZZZZZ USING WS-QTY.
+           05         COL PLUS 2 VALUE "PRECO" HIGHLIGHT.
+           05         COL PLUS 2 PIC ZZZZZZ9,99 USING WS-PRICE.
+           05         COL PLUS 4 VALUE "HB" HIGHLIGHT.
+           05         COL PLUS 2 PIC X USING WS-HB AUTO.
+           05         COL PLUS 4 VALUE "DT" HIGHLIGHT.
+           05         COL PLUS 2 PIC X USING WS-DT AUTO.
+           05 LINE 5  COL  5 VALUE "Corretagem HB    ".
+           05         COL 29 PIC ZZ,ZZ USING WS-HB-COST HIGHLIGHT.
+           05 LINE 6  COL  5 VALUE "Corretagem Mesa  ".
+           05         COL 30 PIC 9,99 USING WS-DESK-COST HIGHLIGHT.
+           05         COL 35 VALUE "%".
 
-           05 LINE  PLUS 2 COL  1 VALUE "HB Brokerage Cost".
-           05              COL 24 PIC ZZ,ZZ USING WS-HB-COST HIGHLIGHT.
-           05 LINE  PLUS 1 COL  1 VALUE "Trading Desk Cost".
-           05              COL 25 PIC 9,99 USING WS-DESK-COST HIGHLIGHT.
-           05              COL 30 VALUE "%".
+           05 LINE 8  COL  5 VALUE "Clearing"
+                                  HIGHLIGHT UNDERLINE
+                                  FOREGROUND-COLOR 1.
+           05         COL 44 VALUE "Bolsa"
+                                  HIGHLIGHT UNDERLINE
+                                  FOREGROUND-COLOR 1.
+           05 LINE 10 COL  5 VALUE "Net Operacional.:" LOWLIGHT.
+           05         COL 23 PIC Z.ZZZ.ZZ9,99 FROM WS-NET-OPR.
+           05         COL 44 VALUE "Transaction Fee.:" LOWLIGHT.
+           05         COL 62 PIC Z.ZZZ.ZZ9,99 FROM WS-TR-FEE.
+           05 LINE 11 COL  5 VALUE "Tx. Liquidacao..:" LOWLIGHT.
+           05         COL 27 PIC Z.ZZ9,99     FROM WS-LIQUIDITY.
+           05         COL 44 VALUE "TTA.............:" LOWLIGHT.
+           05         COL 66 PIC Z.ZZ9,99     FROM WS-TTA.
+           05 LINE 12 COL  5 VALUE "Tx. Registro....:" LOWLIGHT.
+           05         COL 27 PIC Z.ZZ9,99     FROM WS-REGISTER.
 
-           05 LINE  PLUS 2 COL  1 VALUE "CLEARING"
-                                  HIGHLIGHT UNDERLINE.
-           05              COL 40 VALUE "EXCHANGE" HIGHLIGHT UNDERLINE.
-           05 LINE  PLUS 2 COL  1 VALUE "Net Operational.:" LOWLIGHT.
-           05              COL 19 PIC Z.ZZZ.ZZ9,99 FROM WS-NET-OPR.
-           05              COL 40 VALUE "Transaction Fee.:" LOWLIGHT.
-           05              COL 58 PIC Z.ZZZ.ZZ9,99 FROM WS-TR-FEE.
-           05 LINE  PLUS 1 COL  1 VALUE "Liquidity Tax...:" LOWLIGHT.
-           05              COL 23 PIC Z.ZZ9,99     FROM WS-LIQUIDITY.
-           05              COL 40 VALUE "TTA.............:" LOWLIGHT.
-           05              COL 62 PIC Z.ZZ9,99     FROM WS-TTA.
-           05 LINE  PLUS 1 COL  1 VALUE "Register Tax....:" LOWLIGHT.
-           05              COL 23 PIC Z.ZZ9,99     FROM WS-REGISTER.
+           05 LINE 14 COL  5 VALUE "Custos Operacionais"
+                                  HIGHLIGHT UNDERLINE
+                                  FOREGROUND-COLOR 1.
+           05 LINE 16 COL  5 VALUE "Corretagem......:" LOWLIGHT.
+           05         COL 27 PIC Z.ZZ9,99     FROM WS-BROKE-COST.
+           05 LINE 17 COL  5 VALUE "ISS/PIS/COFINS..:" LOWLIGHT.
+           05         COL 27 PIC Z.ZZ9,99     FROM WS-TOT-TX.
+           05 LINE 18 COL  5 VALUE "IRRF............:" LOWLIGHT.
+           05         COL 27 PIC Z.ZZ9,99     FROM WS-IRRF.
+           05 LINE 19 COL  5 VALUE "Outros..........:" LOWLIGHT.
+           05         COL 27 PIC Z.ZZ9,99     FROM WS-OUTROS.
 
-           05 LINE  PLUS 2 COL  1 VALUE "OPERATIONAL COSTS" HIGHLIGHT
-                                  UNDERLINE.
-           05 LINE  PLUS 2 COL  1 VALUE "Operational Tax.:" LOWLIGHT.
-           05              COL 23 PIC Z.ZZ9,99     FROM WS-BROKE-COST.
-           05 LINE  PLUS 1 COL  1 VALUE "ISS/PIS/COFINS..:" LOWLIGHT.
-           05              COL 23 PIC Z.ZZ9,99     FROM WS-TOT-TX.
-           05 LINE  PLUS 1 COL  1 VALUE "IRRF............:" LOWLIGHT.
-           05              COL 23 PIC Z.ZZ9,99     FROM WS-IRRF.
-           05 LINE  PLUS 1 COL  1 VALUE "Others..........:" LOWLIGHT.
-           05              COL 23 PIC Z.ZZ9,99     FROM WS-OUTROS.
+           05 LINE 21 COL  5      VALUE "Custo Total.....:".
+           05         COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM WS-TOTAL-COSTS
+                                  FOREGROUND-COLOR 3.
 
-           05 LINE  PLUS 2 COL  1      VALUE "Total Cost......:".
-           05              COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM
-                                                        WS-TOTAL-COSTS
-                                       FOREGROUND-COLOR 7
-                                       BACKGROUND-COLOR 1.
-
-           05              COL 38      VALUE "Net:".
-           05              COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM
-                                                        WS-NET
-                                       FOREGROUND-COLOR 7
-                                       BACKGROUND-COLOR 1.
+           05         COL 38      VALUE "Net:".
+           05         COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM WS-NET
+                                  FOREGROUND-COLOR 3.
                                                         
-           05              COL PLUS 6  VALUE "A.Price:".
-           05              COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM
-                                                        WS-PM
-                                       FOREGROUND-COLOR 7
-                                       BACKGROUND-COLOR 1.
-
-           05 LINE 22      COL 1 FROM WS-DRAWLINE LOWLIGHT.
-           05 LINE 24      COL 1 FROM WS-DRAWLINE LOWLIGHT.
+           05         COL PLUS 6  VALUE "P.Medio:".
+           05         COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM WS-PM
+                                  FOREGROUND-COLOR 3.
+           05 LINE 24 COL 5 PIC X(76) FROM WS-BLANK UNDERLINE. 
 
        PROCEDURE DIVISION.
        LOAD-DATA.
@@ -310,8 +295,6 @@
            ACCEPT COST-CALC-SCREEN.
            PERFORM CALCULA.
 
-      **** Check change for Home Broker Cost or Desk Cost change
-      **** and update the default values for both on file
            IF WS-HB-COST NOT = WFS-HB-COST 
                OR WS-DESK-COST NOT = WFS-DESK-COST
                PERFORM UPDATE-BROKE-COST
@@ -322,7 +305,10 @@
            DISPLAY MENU-INPUT-CONFIRM.
            MOVE SPACE TO WS-SELECT-OPTION.
            ACCEPT MENU-INPUT-CONFIRM.
-           IF WS-SELECT-OPTION = "Y" OR WS-SELECT-OPTION = "y"
+           IF WS-SELECT-OPTION = "S" OR WS-SELECT-OPTION = "s"
+              MOVE "Registro Incluido" TO WS-MSG
+              DISPLAY PRT-MSG
+              CALL "C$SLEEP" USING WS-DELAY END-CALL
               PERFORM UPD-REGISTER 
            END-IF.
 
