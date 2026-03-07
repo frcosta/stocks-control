@@ -5,6 +5,7 @@
        CONFIGURATION SECTION.
        SPECIAL-NAMES.
            DECIMAL-POINT IS COMMA.
+           CRT STATUS IS WS-CRT-STATUS.
 
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
@@ -22,7 +23,10 @@
            COPY 'register'.
 
        WORKING-STORAGE SECTION.
-       77 WS-DELAY              PIC 9V9999 VALUE 2,5. *> 2,5 seg
+       77 CURSOR-VAL            PIC S9(4) COMP VALUE 0.
+       77 WS-CRT-STATUS         PIC 9(04).
+       77 WS-DELAY              PIC 9V9999 VALUE 2,0. *> 2,0 seg
+       77 WS-VALIDADO           PIC 9(02) VALUE 0.
        77 WS-MSG                PIC X(76)  VALUE SPACES.
        77 WS-LN                 PIC 9(02).
        77 WS-CHAVE-PRIMARIA     PIC X(14).
@@ -33,8 +37,13 @@
        77 WS-STATUS-STK04       PIC X(02).
        77 WS-SELECT-OPTION      PIC X.
        77 WS-SYSTEM-TIME        PIC 9(08).
-       77 WS-DRAWLINE          PIC X(80) VALUE ALL "_".
-       77 WS-BLANK             PIC X(76) VALUE ALL " ".
+       77 WS-DRAWLINE           PIC X(80) VALUE ALL "_".
+       77 WS-BLANK              PIC X(76) VALUE ALL " ".
+       
+       01 WS-QUESTION           PIC X.
+           88 WS-VALID-QUESTION VALUE 'S' 's' 'N' 'n'.
+
+
 
        01 CONSTS                PIC 9(1)V99999999.
            78 WS-STOCK-TRF        VALUE 0,00005.
@@ -70,13 +79,18 @@
            05 WS-HORA           PIC 9(2).
            05 WS-MINUTO         PIC 9(2).
            05 WS-SEGUNDO        PIC 9(2).
+
+       01 WS-ORDER              PIC X.
+           88 WS-VALID-ORDER VALUE 'C', 'c', 'V', 'v'.
+       01 WS-HB                 PIC X.
+           88 WS-VALID-HB VALUE 'S', 's', 'N', 'n'.
+       01 WS-DT                 PIC X.
+           88 WS-VALID-DT VALUE 'S', 's', 'N', 'n'.
+
        01 WS-STOCK.
-           05 WS-ORDER          PIC X.
            05 WS-TICKER         PIC X(10).
            05 WS-QTY            PIC 9(6).
            05 WS-PRICE          PIC 9(7)V99.
-           05 WS-HB             PIC X.
-           05 WS-DT             PIC X.
            05 WS-PM             PIC 9(7)V99.
            05 WS-ALLOC          PIC 9(7)V99.
        01 WS-STOCK-MASK.
@@ -111,9 +125,21 @@
 
        SCREEN SECTION.
        01 CLEAR-SCREEN BLANK SCREEN.
+
+       01 MESSAGE-SCREEN.
+           05 LINE 23 COL 5 FROM WS-MSG BLINK FOREGROUND-COLOR 4.
+       01 MESSAGE-CLEAR.
+           05 LINE 23 COL 5 BLANK LINE.
+
        01 PRT-MSG.
-           05 LINE 23 COL 5 PIC X(76) FROM WS-MSG FOREGROUND-COLOR 3
-                                                  HIGHLIGHT.
+           05 LINE 23 COL 5 PIC X(76) FROM WS-MSG FOREGROUND-COLOR 3.
+ 
+       01 QUESTION.
+           05 LINE 23 COL 5 VALUE "[ ] ".
+           05 LINE 23 COL 9 PIC X(40) FROM WS-MSG FOREGROUND-COLOR 3
+                                      HIGHLIGHT.
+           05 LINE 23 COL 6 PIC X TO WS-QUESTION HIGHLIGHT.
+
        01 MENU-PRINCIPAL2-SCREEN.
           05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
           05 LINE 1  COL 60 VALUE "CONTROLE DE PORTFOLIO" UNDERLINE
@@ -148,7 +174,7 @@
        01 MENU-INPUT-CONFIRM.
            05 LINE 23    COL 5 VALUE "Confirma lancamento (S/N) ?"
                                   FOREGROUND-COLOR 3 HIGHLIGHT.
-           05 LINE 23    COL PLUS 2 PIC X TO WS-SELECT-OPTION.
+           05 LINE 23    COL PLUS 2 PIC X TO WS-QUESTION.
        01 LIST-CUSTODY.
            05 LINE 1  COL 1 FROM WS-DRAWLINE LOWLIGHT.
            05 LINE 1  COL 1 VALUE "Custody Report  ".
@@ -168,17 +194,18 @@
            05         COL PLUS 1 VALUE "/".
            05         COL PLUS 1 PIC 99 USING WS-ANO AUTO.
            05         COL PLUS 2 VALUE "ORDEM" HIGHLIGHT.
-           05         COL PLUS 2 PIC X USING WS-ORDER AUTO LOWLIGHT.
+           05         COL PLUS 2 PIC X USING WS-ORDER AUTO REQUIRED.
            05         COL PLUS 2 VALUE "TICKER" HIGHLIGHT.
            05         COL PLUS 2 PIC X(10) USING WS-TICKER.
            05         COL PLUS 2 VALUE "QTD" HIGHLIGHT.
-           05         COL PLUS 2 PIC ZZZZZZ USING WS-QTY.
+           05         COL PLUS 2 PIC ZZZZZZ USING WS-QTY REQUIRED.
            05         COL PLUS 2 VALUE "PRECO" HIGHLIGHT.
-           05         COL PLUS 2 PIC ZZZZZZ9,99 USING WS-PRICE.
+           05         COL PLUS 2 PIC ZZZZZZZ,ZZ USING WS-PRICE
+                                 REQUIRED.
            05         COL PLUS 4 VALUE "HB" HIGHLIGHT.
-           05         COL PLUS 2 PIC X USING WS-HB AUTO.
+           05         COL PLUS 2 PIC X USING WS-HB AUTO REQUIRED.
            05         COL PLUS 4 VALUE "DT" HIGHLIGHT.
-           05         COL PLUS 2 PIC X USING WS-DT AUTO.
+           05         COL PLUS 2 PIC X USING WS-DT AUTO REQUIRED.
            05 LINE 5  COL  5 VALUE "Corretagem HB    ".
            05         COL 29 PIC ZZ,ZZ USING WS-HB-COST HIGHLIGHT.
            05 LINE 6  COL  5 VALUE "Corretagem Mesa  ".
@@ -225,7 +252,7 @@
            05         COL PLUS 6  VALUE "P.Medio:".
            05         COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM WS-PM
                                   FOREGROUND-COLOR 3.
-           05 LINE 24 COL 5 PIC X(76) FROM WS-BLANK UNDERLINE. 
+           05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK UNDERLINE. 
 
        PROCEDURE DIVISION.
        LOAD-DATA.
@@ -248,7 +275,8 @@
               ACCEPT MENU-PRINCIPAL2-SCREEN
               EVALUATE WS-SELECT-OPTION
                   WHEN 'a'
-                      PERFORM REG-OPERATION
+      *                PERFORM REG-OPERATION
+                      PERFORM NEW-DEF-CUSTODIA 
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '1'
                       PERFORM BUYSELL-REG
@@ -264,13 +292,88 @@
               END-EVALUATE
            END-PERFORM
            GO TO ENDPROGRAM.
-       
-       REG-OPERATION.
+
+
+
+       NEW-DEF-CUSTODIA.
+
            PERFORM CLEAR-LOCAL-FIELDS.
            DISPLAY CLEAR-SCREEN.
            DISPLAY COST-CALC-SCREEN.
-           ACCEPT COST-CALC-SCREEN.
+
+           PERFORM WITH TEST AFTER UNTIL WS-VALIDADO = 0
+              MOVE 0 TO WS-VALIDADO
+              ACCEPT COST-CALC-SCREEN
+        
+              IF NOT WS-VALID-ORDER
+                 MOVE "Tipo de ordem invalida. C=Compra / V=Venda"
+                      TO WS-MSG
+                 PERFORM MOSTRA-MSG
+                 ADD 1 TO WS-VALIDADO
+              END-IF
+
+              IF NOT WS-VALID-HB
+                 MOVE "Campo HB (Home Broker) incorreto." TO WS-MSG
+                 PERFORM MOSTRA-MSG
+                 ADD 1 TO WS-VALIDADO
+              END-IF
+
+              IF NOT WS-VALID-DT
+                 MOVE "Campo DT (Day Trade) incorreto" TO WS-MSG
+                 PERFORM MOSTRA-MSG
+                 ADD 1 TO WS-VALIDADO
+              END-IF
+
+              IF WS-QTY = 0
+                 MOVE "QTD incorreta. Deve ser maior que 0" TO WS-MSG
+                 PERFORM MOSTRA-MSG
+                 ADD 1 TO WS-VALIDADO
+              END-IF
+
+              IF WS-PRICE = 0
+                 MOVE "PRECO incorreto. Deve ser maior que 0" TO WS-MSG
+                 PERFORM MOSTRA-MSG
+                 ADD 1 TO WS-VALIDADO
+              END-IF
+           END-PERFORM.
+
+           MOVE FUNCTION UPPER-CASE(WS-ORDER) TO WS-ORDER.
+           MOVE FUNCTION UPPER-CASE(WS-TICKER) TO WS-TICKER.
+           MOVE FUNCTION UPPER-CASE(WS-HB) TO WS-HB.
+           MOVE FUNCTION UPPER-CASE(WS-DT) TO WS-DT.
+
            PERFORM CALCULA.
+
+           IF WS-HB-COST NOT = WFS-HB-COST 
+               OR WS-DESK-COST NOT = WFS-DESK-COST
+               PERFORM UPDATE-BROKE-COST
+           END-IF.
+
+           DISPLAY COST-CALC-SCREEN.
+           
+           MOVE "Confirma inclusao do registro?" TO WS-MSG.
+           DISPLAY QUESTION.
+           PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
+              ACCEPT QUESTION
+           END-PERFORM.
+           IF WS-QUESTION = "S" OR WS-QUESTION = "s"
+              PERFORM UPD-CUSTODY
+              MOVE "Registro incluido na custodia inicial" TO WS-MSG
+           ELSE
+              MOVE "Registro desconsiderado" TO WS-MSG
+           END-IF.
+           PERFORM MOSTRA-MSG.
+
+       DEF-CUSTODIA.
+           PERFORM CLEAR-LOCAL-FIELDS.
+           DISPLAY CLEAR-SCREEN.
+
+           DISPLAY COST-CALC-SCREEN.
+           ACCEPT COST-CALC-SCREEN.
+           DISPLAY WS-CRT-STATUS AT LINE 01 COLUMN 01.
+           ACCEPT WS-SELECT-OPTION AT LINE 23 COLUMN 80.
+           PERFORM CALCULA.
+           
 
       **** Check change for Home Broker Cost or Desk Cost change
       **** and update the default values for both on file
@@ -278,6 +381,8 @@
                OR WS-DESK-COST NOT = WFS-DESK-COST
                PERFORM UPDATE-BROKE-COST
            END-IF.
+
+
 
            DISPLAY COST-CALC-SCREEN.
 
@@ -500,4 +605,15 @@
            WRITE STK03-REGISTER.
            CLOSE STK03.
            EXIT.
+
+       MOSTRA-MSG.
+           DISPLAY MESSAGE-SCREEN.
+           MOVE 0 TO CURSOR-VAL.
+           CALL "curs_set" USING BY VALUE CURSOR-VAL.
+           CALL "C$SLEEP" USING WS-DELAY END-CALL.
+           MOVE 1 TO CURSOR-VAL.
+           CALL "curs_set" USING BY VALUE CURSOR-VAL.
+           DISPLAY MESSAGE-CLEAR.
+           EXIT.
+
 

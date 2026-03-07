@@ -1,0 +1,12 @@
+WS-ORDEM = C/c ou V/v
+WS-DT    = S/s ou N/n
+WS-HB    = S/s ou N/n
+
+F1 = 1001 ABORTA
+F2 = 1002 CALCULA
+F3 = 1003 GRAVA
+...
+F12 = 1012
+
+
+
