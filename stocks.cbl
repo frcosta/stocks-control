@@ -324,17 +324,6 @@
                  ADD 1 TO WS-VALIDADO
               END-IF
 
-              IF WS-QTY = 0
-                 MOVE "QTD incorreta. Deve ser maior que 0" TO WS-MSG
-                 PERFORM MOSTRA-MSG
-                 ADD 1 TO WS-VALIDADO
-              END-IF
-
-              IF WS-PRICE = 0
-                 MOVE "PRECO incorreto. Deve ser maior que 0" TO WS-MSG
-                 PERFORM MOSTRA-MSG
-                 ADD 1 TO WS-VALIDADO
-              END-IF
            END-PERFORM.
 
            MOVE FUNCTION UPPER-CASE(WS-ORDER) TO WS-ORDER.
