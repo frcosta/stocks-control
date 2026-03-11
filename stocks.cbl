@@ -12,6 +12,7 @@
            COPY 'control_stk01'.
            COPY 'control_custody'.
            COPY 'control_register'.
+           COPY 'control_stk04'.
 
        DATA DIVISION.
        FILE SECTION.
@@ -21,6 +22,8 @@
            COPY 'custody'.
        FD STK03.
            COPY 'register'.
+       FD STK04.
+           COPY 'stk04'.
 
        WORKING-STORAGE SECTION.
        77 CURSOR-VAL            PIC S9(4) COMP VALUE 0.
@@ -75,6 +78,16 @@
            05 WS-ANO            PIC 9(2).
            05 WS-MES            PIC 9(2).
            05 WS-DIA            PIC 9(2).
+       01 WS-DADOS-INICIAIS.
+           05 WS-ANO-INICIAL    PIC 9(2).
+           05 WS-MES-INICIAL    PIC 9(2).
+           05 WS-DIA-INICIAL    PIC 9(2).
+           05 WS-PREJ-COM-INI   PIC 9(6)V99.
+           05 WS-PREJ-DT-INI    PIC 9(6)V99.
+           05 WS-PREJ-FII-INI   PIC 9(6)V99.
+           05 WS-IRRF-COM-INI   PIC 9(6)V99.
+           05 WS-IRRF-DT-INI    PIC 9(6)V99.
+           05 WS-IRRF-FII-INI   PIC 9(6)V99.
        01 WS-TIME.
            05 WS-HORA           PIC 9(2).
            05 WS-MINUTO         PIC 9(2).
@@ -149,8 +162,12 @@
           05 LINE 4  COL 5 VALUE "Configuracoes Iniciais" UNDERLINE 
                                   FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 5  COL 5 VALUE "a) Definir custodia inicial".
+          05 LINE 5  COL 45 VALUE "d) Exibir custodia inicial".
+
           05 LINE 6  COL 5 VALUE "b) Definir prejuizos acumulados".
+          05 LINE 6  COL 45 VALUE "e) Exibir prejuizos acumulados".
           05 LINE 7  COL 5 VALUE "c) Definir data inicial".
+          05 LINE 7  COL 45 VALUE "c) Redefinir configuracoes iniciais".
           05 LINE 9  COL 5 VALUE "Lancamentos" UNDERLINE
                                   FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 10 COL 5 VALUE "1.Lancar ordens de compra e venda".
@@ -184,6 +201,62 @@
            05 LINE 3  COL 42 VALUE "BALANCE" HIGHLIGHT UNDERLINE.
            05 LINE 22 COL 1 FROM WS-DRAWLINE LOWLIGHT.
            05 LINE 24 COL 1 FROM WS-DRAWLINE LOWLIGHT.
+
+       01 DEF-DADOS-INICIAIS-SCR.
+           05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
+           05 LINE 1  COL 61 VALUE "CONFIGURACAO INICIAL"
+                                   HIGHLIGHT UNDERLINE. 
+           05 LINE 2 COL 5 VALUE "DATA INICIAL" HIGHLIGHT.
+           05        COL PLUS 2 PIC 99 USING WS-DIA-INICIAL
+                                       AUTO.
+           05        COL PLUS 1 VALUE "/".
+           05        COL PLUS 1 PIC 99 USING WS-MES-INICIAL
+                                       AUTO.
+           05        COL PLUS 1 VALUE "/".
+           05        COL PLUS 1 PIC 99 USING WS-ANO-INICIAL
+                                       AUTO.
+           05 LINE 4 COL 05 VALUE "OPERACOES COMUNS  " HIGHLIGHT
+                                                      UNDERLINE.
+           05        COL 35 VALUE "DAY TRADES        " HIGHLIGHT
+                                                      UNDERLINE.
+           05        COL 63 VALUE "FIIs              " HIGHLIGHT
+                                                      UNDERLINE.
+
+           05 LINE 5 COL 5 VALUE "Prejuizo".
+           05        COL PLUS 2 PIC ZZZZZZ,ZZ USING WS-PREJ-COM-INI.
+           05        COL 35 VALUE "Prejuizo".
+           05        COL PLUS 2 PIC ZZZZZZ,ZZ USING WS-PREJ-DT-INI.
+           05        COL 63 VALUE "Prejuizo".
+           05        COL PLUS 2 PIC ZZZZZZ,ZZ USING WS-PREJ-FII-INI.
+
+           05 LINE 6 COL 5 VALUE "IRRF".
+           05        COL PLUS 7 PIC ZZZZZ,ZZ USING WS-IRRF-COM-INI.
+           05        COL 35 VALUE "IRRF".
+           05        COL PLUS 7 PIC ZZZZZ,ZZ USING WS-IRRF-DT-INI.
+           05        COL 63 VALUE "IRRF".
+           05        COL PLUS 7 PIC ZZZZZ,ZZ USING WS-IRRF-FII-INI.
+           05 LINE 7 COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
+           05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK UNDERLINE. 
+           
+       01 DEF-CUSTODIA-INICIAL-SCR.
+           05 LINE 9 COL 5 VALUE "PREGAO" HIGHLIGHT.
+           05        COL PLUS 2 PIC 99 USING WS-DIA AUTO.
+           05        COL PLUS 1 VALUE "/".
+           05        COL PLUS 1 PIC 99 USING WS-MES AUTO.
+           05        COL PLUS 1 VALUE "/".
+           05        COL PLUS 1 PIC 99 USING WS-ANO AUTO.
+           05        COL PLUS 2 VALUE "ATIVO" HIGHLIGHT.
+           05        COL PLUS 2 PIC X(10) USING WS-TICKER.
+           05        COL PLUS 2 VALUE "QTD" HIGHLIGHT.
+           05        COL PLUS 2 PIC ZZZZZZ USING WS-QTY REQUIRED.
+           05        COL PLUS 2 VALUE "PM" HIGHLIGHT.
+           05        COL PLUS 2 PIC ZZZZZZZ,ZZ USING WS-PRICE
+                                                REQUIRED.
+           05        COL PLUS 2 VALUE "TOTAL" HIGHLIGHT.
+           05        COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM WS-PM
+                                                   REVERSE-VIDEO.
+           05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK UNDERLINE. 
+
        01 COST-CALC-SCREEN.
            05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
            05 LINE 1  COL 65 VALUE "CUSTODIA INICIAL"
@@ -267,6 +340,9 @@
            CLOSE STK01.
 
            ACCEPT WS-DATA FROM DATE.
+           MOVE WS-ANO TO WS-ANO-INICIAL.
+           MOVE WS-MES TO WS-MES-INICIAL.
+           MOVE WS-DIA TO WS-DIA-INICIAL.
 
        INICIO.
            PERFORM UNTIL WS-SELECT-OPTION = '8' 
@@ -275,8 +351,8 @@
               ACCEPT MENU-PRINCIPAL2-SCREEN
               EVALUATE WS-SELECT-OPTION
                   WHEN 'a'
-      *                PERFORM REG-OPERATION
-                      PERFORM NEW-DEF-CUSTODIA 
+      *                PERFORM NEW-DEF-CUSTODIA 
+                      PERFORM DEF-CUSTODIA-INICIAL
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '1'
                       PERFORM BUYSELL-REG
@@ -293,7 +369,31 @@
            END-PERFORM
            GO TO ENDPROGRAM.
 
+       DEF-CUSTODIA-INICIAL.
+           PERFORM CLEAR-LOCAL-FIELDS.
+           DISPLAY CLEAR-SCREEN.
+           DISPLAY DEF-DADOS-INICIAIS-SCR.
+           ACCEPT DEF-DADOS-INICIAIS-SCR.
 
+           MOVE "Confirma dados iniciais?" TO WS-MSG.
+           DISPLAY QUESTION.
+           PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
+              ACCEPT QUESTION
+           END-PERFORM.
+           IF WS-QUESTION NOT = "S" AND WS-QUESTION NOT = "s"
+              EXIT PARAGRAPH
+           END-IF.
+
+           PERFORM UPD-INITAL-LOSS.
+
+           MOVE "Data inicial, prejuizos acumulados e IRRF definidos"
+                TO WS-MSG.
+           PERFORM MOSTRA-MSG.
+           MOVE "Entre com a custodia inicial" TO WS-MSG
+           PERFORM MOSTRA-MSG.
+
+           DISPLAY DEF-CUSTODIA-INICIAL-SCR.
+           ACCEPT  DEF-CUSTODIA-INICIAL-SCR.
 
        NEW-DEF-CUSTODIA.
 
@@ -304,7 +404,7 @@
            PERFORM WITH TEST AFTER UNTIL WS-VALIDADO = 0
               MOVE 0 TO WS-VALIDADO
               ACCEPT COST-CALC-SCREEN
-        
+
               IF NOT WS-VALID-ORDER
                  MOVE "Tipo de ordem invalida. C=Compra / V=Venda"
                       TO WS-MSG
@@ -326,61 +426,32 @@
 
            END-PERFORM.
 
-           MOVE FUNCTION UPPER-CASE(WS-ORDER) TO WS-ORDER.
+           MOVE FUNCTION UPPER-CASE(WS-ORDER)  TO WS-ORDER.
            MOVE FUNCTION UPPER-CASE(WS-TICKER) TO WS-TICKER.
-           MOVE FUNCTION UPPER-CASE(WS-HB) TO WS-HB.
-           MOVE FUNCTION UPPER-CASE(WS-DT) TO WS-DT.
+           MOVE FUNCTION UPPER-CASE(WS-HB)     TO WS-HB.
+           MOVE FUNCTION UPPER-CASE(WS-DT)     TO WS-DT.
 
            PERFORM CALCULA.
 
-           IF WS-HB-COST NOT = WFS-HB-COST 
+           IF WS-HB-COST NOT = WFS-HB-COST
                OR WS-DESK-COST NOT = WFS-DESK-COST
                PERFORM UPDATE-BROKE-COST
            END-IF.
 
            DISPLAY COST-CALC-SCREEN.
-           
+
            MOVE "Confirma inclusao do registro?" TO WS-MSG.
            DISPLAY QUESTION.
            PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
               ACCEPT QUESTION
            END-PERFORM.
            IF WS-QUESTION = "S" OR WS-QUESTION = "s"
-              PERFORM UPD-CUSTODY
+              PERFORM UPD-INITIAL-CUSTODY
               MOVE "Registro incluido na custodia inicial" TO WS-MSG
            ELSE
               MOVE "Registro desconsiderado" TO WS-MSG
            END-IF.
            PERFORM MOSTRA-MSG.
-
-       DEF-CUSTODIA.
-           PERFORM CLEAR-LOCAL-FIELDS.
-           DISPLAY CLEAR-SCREEN.
-
-           DISPLAY COST-CALC-SCREEN.
-           ACCEPT COST-CALC-SCREEN.
-           DISPLAY WS-CRT-STATUS AT LINE 01 COLUMN 01.
-           ACCEPT WS-SELECT-OPTION AT LINE 23 COLUMN 80.
-           PERFORM CALCULA.
-           
-
-      **** Check change for Home Broker Cost or Desk Cost change
-      **** and update the default values for both on file
-           IF WS-HB-COST NOT = WFS-HB-COST 
-               OR WS-DESK-COST NOT = WFS-DESK-COST
-               PERFORM UPDATE-BROKE-COST
-           END-IF.
-
-
-
-           DISPLAY COST-CALC-SCREEN.
-
-           DISPLAY MENU-INPUT-CONFIRM.
-           MOVE SPACE TO WS-SELECT-OPTION.
-           ACCEPT MENU-INPUT-CONFIRM.
-           IF WS-SELECT-OPTION = "Y" OR WS-SELECT-OPTION = "y"
-              PERFORM UPD-CUSTODY 
-           END-IF.
 
        BUYSELL-REG.
            PERFORM CLEAR-LOCAL-FIELDS.
@@ -389,7 +460,7 @@
            ACCEPT COST-CALC-SCREEN.
            PERFORM CALCULA.
 
-           IF WS-HB-COST NOT = WFS-HB-COST 
+           IF WS-HB-COST NOT = WFS-HB-COST
                OR WS-DESK-COST NOT = WFS-DESK-COST
                PERFORM UPDATE-BROKE-COST
            END-IF.
@@ -403,7 +474,7 @@
               MOVE "Registro Incluido" TO WS-MSG
               DISPLAY PRT-MSG
               CALL "C$SLEEP" USING WS-DELAY END-CALL
-              PERFORM UPD-REGISTER 
+              PERFORM UPD-REGISTER
            END-IF.
 
 
@@ -493,6 +564,52 @@
                           WS-REGISTER WS-BROKE-COST WS-TOT-TX WS-IRRF
                           WS-OUTROS WS-TOTAL-COSTS.
            EXIT.
+
+       UPD-INITAL-LOSS.
+           OPEN OUTPUT STK04.
+           MOVE WS-ANO-INICIAL  TO WFS-ANO-INICIAL.
+           MOVE WS-MES-INICIAL  TO WFS-MES-INICIAL.
+           MOVE WS-DIA-INICIAL  TO WFS-DIA-INICIAL.
+           MOVE WS-PREJ-COM-INI TO WFS-PREJ-COM-INI.
+           MOVE WS-PREJ-DT-INI  TO WFS-PREJ-DT-INI.
+           MOVE WS-PREJ-FII-INI TO WFS-PREJ-FII-INI.
+           MOVE WS-IRRF-COM-INI TO WFS-IRRF-COM-INI.
+           MOVE WS-IRRF-DT-INI  TO WFS-IRRF-DT-INI.
+           MOVE WS-IRRF-FII-INI TO WFS-IRRF-FII-INI.
+           WRITE STK04-REGISTER.
+           CLOSE STK04.
+
+       UPD-INITIAL-CUSTODY.
+           OPEN I-O STK02.
+           IF WS-STATUS-STK02 EQUAL TO "35"
+               CLOSE STK02
+               OPEN OUTPUT STK02
+               CLOSE STK02
+               OPEN I-O STK02
+           END-IF.
+
+           MOVE WS-TICKER TO WFS-STK02-TICKER.
+           READ STK02 KEY IS WFS-STK02-TICKER
+
+           MOVE WS-QTY    TO WFS-STK02-QTY
+           MOVE WS-PM     TO WFS-STK02-PMA
+           MOVE WS-NET    TO WFS-STK02-BALANCE
+ 
+           EVALUATE WS-STATUS-STK02
+               WHEN "23"
+                  WRITE STK02-REGISTER   
+                  MOVE "Novo ativo incluido com sucesso" TO WS-MSG
+               WHEN "00"
+                  REWRITE STK02-REGISTER
+                  MOVE "Ativo atualizado com sucesso" TO WS-MSG
+               WHEN OTHER 
+                  MOVE "Erro na inclusao do ativo" TO WS-MSG
+           END-EVALUATE.
+           PERFORM MOSTRA-MSG.
+           CLOSE STK02.
+
+
+
 
        UPD-CUSTODY.
            OPEN I-O STK02.
