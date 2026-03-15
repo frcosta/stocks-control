@@ -165,7 +165,7 @@
           05 LINE 4  COL 5 VALUE "Configuracoes Iniciais" UNDERLINE 
                                   FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 5  COL 5 VALUE "a) Definir custodia inicial".
-          05 LINE 5  COL 45 VALUE "d) Exibir custodia inicial".
+          05 LINE 5  COL 45 VALUE "d) Exibir dados iniciais".
 
           05 LINE 6  COL 5 VALUE "b) Definir prejuizos acumulados".
           05 LINE 6  COL 45 VALUE "e) Exibir prejuizos acumulados".
@@ -207,63 +207,61 @@
 
        01 DEF-DADOS-INICIAIS-SCR.
            05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
-           05 LINE 1  COL 61 VALUE "CONFIGURACAO INICIAL"
-                                   HIGHLIGHT UNDERLINE. 
-           05 LINE 2 COL 5 VALUE "DATA INICIAL" HIGHLIGHT.
-           05        COL PLUS 2 PIC 99 USING WS-DIA-INICIAL
-                                       AUTO.
-           05        COL PLUS 1 VALUE "/".
-           05        COL PLUS 1 PIC 99 USING WS-MES-INICIAL
-                                       AUTO.
-           05        COL PLUS 1 VALUE "/".
-           05        COL PLUS 1 PIC 99 USING WS-ANO-INICIAL
-                                       AUTO.
-           05 LINE 4 COL 05 VALUE "OPERACOES COMUNS  " HIGHLIGHT
-                                                      UNDERLINE.
-           05        COL 35 VALUE "DAY TRADES        " HIGHLIGHT
-                                                      UNDERLINE.
-           05        COL 63 VALUE "FIIs              " HIGHLIGHT
-                                                      UNDERLINE.
+           05 LINE 1  COL 61 VALUE "CONFIGURACAO INICIAL" HIGHLIGHT
+                                                          UNDERLINE. 
+           05 LINE 2 COL 5 VALUE "DATA INICIAL   /  /  "  HIGHLIGHT.
+           05        COL 18 PIC 99 USING WS-DIA-INICIAL   AUTO.
+           05        COL 21 PIC 99 USING WS-MES-INICIAL   AUTO.
+           05        COL 24 PIC 99 USING WS-ANO-INICIAL   AUTO.
 
-           05 LINE 5 COL 5 VALUE "Prejuizo".
-           05        COL PLUS 2 PIC ZZZZZZ,ZZ USING WS-PREJ-COM-INI.
+           05 LINE 4 COL 05 VALUE "OPERACOES COMUNS  "    HIGHLIGHT
+                                                          UNDERLINE.
+           05        COL 35 VALUE "DAY TRADES        "    HIGHLIGHT
+                                                          UNDERLINE.
+           05        COL 63 VALUE "FIIs              "    HIGHLIGHT
+                                                          UNDERLINE.
+
+           05 LINE 5 COL  5 VALUE "Prejuizo".
            05        COL 35 VALUE "Prejuizo".
-           05        COL PLUS 2 PIC ZZZZZZ,ZZ USING WS-PREJ-DT-INI.
            05        COL 63 VALUE "Prejuizo".
-           05        COL PLUS 2 PIC ZZZZZZ,ZZ USING WS-PREJ-FII-INI.
 
-           05 LINE 6 COL 5 VALUE "IRRF".
-           05        COL PLUS 7 PIC ZZZZZ,ZZ USING WS-IRRF-COM-INI.
+           05        COL 14 PIC ZZZZZZ,ZZ USING WS-PREJ-COM-INI.
+           05        COL 44 PIC ZZZZZZ,ZZ USING WS-PREJ-DT-INI.
+           05        COL 72 PIC ZZZZZZ,ZZ USING WS-PREJ-FII-INI.
+
+           05 LINE 6 COL  5 VALUE "IRRF".
            05        COL 35 VALUE "IRRF".
-           05        COL PLUS 7 PIC ZZZZZ,ZZ USING WS-IRRF-DT-INI.
            05        COL 63 VALUE "IRRF".
-           05        COL PLUS 7 PIC ZZZZZ,ZZ USING WS-IRRF-FII-INI.
+
+           05        COL 15 PIC ZZZZZ,ZZ USING WS-IRRF-COM-INI.
+           05        COL 45 PIC ZZZZZ,ZZ USING WS-IRRF-DT-INI.
+           05        COL 73 PIC ZZZZZ,ZZ USING WS-IRRF-FII-INI.
+
            05 LINE 7 COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
            05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK UNDERLINE. 
            
        01 DEF-CUSTODIA-INICIAL-SCR.
-           05 LINE 9 COL 5 VALUE "PREGAO" HIGHLIGHT.
-           05        COL PLUS 2 PIC 99 USING WS-DIA AUTO.
-           05        COL PLUS 1 VALUE "/".
-           05        COL PLUS 1 PIC 99 USING WS-MES AUTO.
-           05        COL PLUS 1 VALUE "/".
-           05        COL PLUS 1 PIC 99 USING WS-ANO AUTO.
-           05        COL PLUS 2 VALUE "ATIVO" HIGHLIGHT.
-           05        COL PLUS 2 PIC X(10) USING WS-TICKER.
-           05        COL PLUS 2 VALUE "QTD" HIGHLIGHT.
-           05        COL PLUS 2 PIC ZZZZZZ USING WS-QTY REQUIRED.
-           05        COL PLUS 2 VALUE "PM" HIGHLIGHT.
-           05        COL PLUS 2 PIC ZZZZZZZ,ZZ USING WS-PRICE
-                                                REQUIRED.
-           05        COL PLUS 2 VALUE "TOTAL" HIGHLIGHT.
-           05        COL PLUS 2  PIC Z.ZZZ.ZZ9,99 FROM WS-BALANCE
-                                                  REVERSE-VIDEO.
-           05 LINE 11 COL  5 VALUE "SEQ" HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 15 VALUE "ATIVO" HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 30 VALUE "QUANTIDADE" HIGHLIGHT UNDERLINE. 
+           05 LINE 9 COL 5 VALUE "PREGAO   /  /  "        HIGHLIGHT.
+           05        COL 21 VALUE "ATIVO"                 HIGHLIGHT.
+           05        COL 38 VALUE "QTD"                   HIGHLIGHT.
+           05        COL 49 VALUE "PM"                    HIGHLIGHT.
+           05        COL 63 VALUE "TOTAL"                 HIGHLIGHT.
+
+           05        COL 12 PIC 99 USING WS-DIA           AUTO.
+           05        COL 15 PIC 99 USING WS-MES           AUTO.
+           05        COL 18 PIC 99 USING WS-ANO           AUTO.
+           05        COL 27 PIC X(10) USING WS-TICKER.
+           05        COL 42 PIC ZZZZZZ USING WS-QTY.
+           05        COL 52 PIC ZZZZZZZ,ZZ USING WS-PRICE.
+           05        COL 69 PIC Z.ZZZ.ZZ9,99 FROM WS-BALANCE
+                                             REVERSE-VIDEO.
+
+           05 LINE 11 COL  5 VALUE "SEQ"         HIGHLIGHT UNDERLINE. 
+           05 LINE 11 COL 15 VALUE "ATIVO"       HIGHLIGHT UNDERLINE. 
+           05 LINE 11 COL 30 VALUE "QUANTIDADE"  HIGHLIGHT UNDERLINE. 
            05 LINE 11 COL 50 VALUE "PRECO MEDIO" HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 74 VALUE "POSICAO" HIGHLIGHT UNDERLINE. 
-           05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK UNDERLINE. 
+           05 LINE 11 COL 74 VALUE "POSICAO"     HIGHLIGHT UNDERLINE. 
+           05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK       UNDERLINE. 
 
        01 COST-CALC-SCREEN.
            05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
@@ -359,8 +357,10 @@
               ACCEPT MENU-PRINCIPAL2-SCREEN
               EVALUATE WS-SELECT-OPTION
                   WHEN 'a'
-      *                PERFORM NEW-DEF-CUSTODIA 
                       PERFORM DEF-CUSTODIA-INICIAL
+                      MOVE SPACE TO WS-SELECT-OPTION
+                  WHEN 'd'
+                      PERFORM LST-CUSTODIA-INICIAL
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '1'
                       PERFORM BUYSELL-REG
@@ -390,14 +390,14 @@
            END-PERFORM.
            IF WS-QUESTION NOT = "S" AND WS-QUESTION NOT = "s"
               EXIT PARAGRAPH
-           END-IF.
+              END-IF.
 
-           PERFORM UPD-INITAL-LOSS.
+           DISPLAY DEF-DADOS-INICIAIS-SCR.
+
+           PERFORM UPD-INITIAL-LOSS.
 
            MOVE "Data inicial, prejuizos acumulados e IRRF definidos"
                 TO WS-MSG.
-           PERFORM MOSTRA-MSG.
-           MOVE "Entre com a custodia inicial" TO WS-MSG
            PERFORM MOSTRA-MSG.
 
            MOVE 12 TO WS-LN.
@@ -406,10 +406,31 @@
                                         UNTIL WS-POS-ARRAY > 100
                                         
               ACCEPT  DEF-CUSTODIA-INICIAL-SCR
+              IF WS-TICKER = SPACES 
+                IF WS-POS-ARRAY = 1
+                  EXIT PERFORM 
+                END-IF
+                MOVE "Confirma inclusao da custodia inicial?" TO WS-MSG
+                DISPLAY QUESTION
+                PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
+                  ACCEPT QUESTION
+                END-PERFORM
+                DISPLAY MESSAGE-CLEAR
+                IF WS-QUESTION NOT = "S" AND WS-QUESTION NOT = "s"
+                    EXIT PARAGRAPH
+                ELSE
+                    PERFORM UPD-CUSTODIA-INICIAL
+                    EXIT PERFORM
+                END-IF
+              END-IF
+
+
               MULTIPLY WS-PRICE BY WS-QTY GIVING WS-BALANCE
-              MOVE FUNCTION UPPER-CASE(WS-TICKER)  TO WS-TICKER
+              MOVE FUNCTION UPPER-CASE(WS-TICKER)    TO WS-TICKER
+              MOVE FUNCTION TRIM(WS-TICKER TRAILING) TO WS-TICKER
+              MOVE FUNCTION TRIM(WS-TICKER LEADING)  TO WS-TICKER
               DISPLAY DEF-CUSTODIA-INICIAL-SCR
-   
+
               MOVE "Confirma lancamento?" TO WS-MSG
               DISPLAY QUESTION
               PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
@@ -428,10 +449,10 @@
               MOVE WS-BALANCE TO WS-STK02-BALANCE(WS-POS-ARRAY)
                                  WS-BALANCE-MASK
 
-              DISPLAY WS-POS-ARRAY AT LINE WS-LN COLUMN 5
-              DISPLAY WS-TICKER AT LINE WS-LN COLUMN 15  
-              DISPLAY WS-QTY-MASK AT LINE WS-LN COLUMN 33
-              DISPLAY WS-PRICE-MASK AT LINE WS-LN COLUMN 49 
+              DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
+              DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
+              DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 33
+              DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
               DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69 
 
               MOVE SPACES TO WS-TICKER
@@ -440,6 +461,36 @@
               ADD 1 TO WS-LN
            END-PERFORM.
 
+       UPD-CUSTODIA-INICIAL.
+           OPEN OUTPUT STK02.
+           PERFORM VARYING WS-LN FROM 1 BY 1
+                                        UNTIL WS-LN > WS-POS-ARRAY
+             MOVE WS-STK02-TICKER(WS-LN)  TO WFS-STK02-TICKER
+             MOVE WS-STK02-QTY(WS-LN)     TO WFS-STK02-QTY
+             MOVE WS-STK02-PRICE(WS-LN)   TO WFS-STK02-PRICE
+             MOVE WS-STK02-BALANCE(WS-LN) TO WFS-STK02-BALANCE
+
+             WRITE STK02-REGISTER
+           END-PERFORM.
+           CLOSE STK02.
+
+       LST-CUSTODIA-INICIAL.
+           PERFORM READ-INITIAL-LOSS.
+           DISPLAY CLEAR-SCREEN.
+           DISPLAY DEF-DADOS-INICIAIS-SCR.
+           MOVE "Confirma dados iniciais?" TO WS-MSG.
+           DISPLAY QUESTION.
+           ACCEPT QUESTION.
+           DISPLAY MESSAGE-CLEAR.
+ 
+           
+
+
+
+
+
+
+      
 
 
 
@@ -552,7 +603,7 @@
                MULTIPLY WS-NET-OPR BY WS-OPTION-REG GIVING WS-REGISTER
            END-IF.
 
-           IF WS-HB = "Y" OR WS-HB = "y"
+           IF WS-HB = "S" OR WS-HB = "s"
                MOVE WS-HB-COST TO WS-BROKE-COST
            ELSE
                COMPUTE WS-BROKE-COST = WS-NET-OPR * WS-DESK-COST / 100
@@ -574,7 +625,7 @@
 
       **** Calculate Income Tax (snitch)
            IF WS-ORDER = "S" OR WS-ORDER = "s"
-               IF WS-DT = "Y" OR WS-DT = "y"
+               IF WS-DT = "S" OR WS-DT = "s"
                    MULTIPLY WS-NET-OPR BY WS-IRRF-DT GIVING WS-IRRF
                ELSE
                    MULTIPLY WS-NET-OPR BY WS-IRRF-ST GIVING WS-IRRF
@@ -613,7 +664,12 @@
                           WS-OUTROS WS-TOTAL-COSTS.
            EXIT.
 
-       UPD-INITAL-LOSS.
+       CLEAR-STK04-FIELDS.
+           MOVE 0 TO WS-ANO-INICIAL WS-MES-INICIAL WS-DIA-INICIAL.
+           MOVE 0 TO WS-PREJ-COM-INI WS-PREJ-DT-INI WS-PREJ-FII-INI. 
+           MOVE 0 TO WS-IRRF-COM-INI WS-IRRF-DT-INI WS-IRRF-FII-INI.
+
+       UPD-INITIAL-LOSS.
            OPEN OUTPUT STK04.
            MOVE WS-ANO-INICIAL  TO WFS-ANO-INICIAL.
            MOVE WS-MES-INICIAL  TO WFS-MES-INICIAL.
@@ -625,6 +681,25 @@
            MOVE WS-IRRF-DT-INI  TO WFS-IRRF-DT-INI.
            MOVE WS-IRRF-FII-INI TO WFS-IRRF-FII-INI.
            WRITE STK04-REGISTER.
+           CLOSE STK04.
+
+       READ-INITIAL-LOSS.
+           OPEN INPUT STK04.
+           IF WS-STATUS-STK04 EQUAL TO "35"
+               PERFORM CLEAR-STK04-FIELDS
+               PERFORM UPD-INITIAL-LOSS
+               GO TO READ-INITIAL-LOSS
+           END-IF.
+           READ STK04.
+           MOVE WFS-ANO-INICIAL  TO WS-ANO-INICIAL.
+           MOVE WFS-MES-INICIAL  TO WS-MES-INICIAL.
+           MOVE WFS-DIA-INICIAL  TO WS-DIA-INICIAL.
+           MOVE WFS-PREJ-COM-INI TO WS-PREJ-COM-INI.
+           MOVE WFS-PREJ-DT-INI  TO WS-PREJ-DT-INI.
+           MOVE WFS-PREJ-FII-INI TO WS-PREJ-FII-INI.
+           MOVE WFS-IRRF-COM-INI TO WS-IRRF-COM-INI.
+           MOVE WFS-IRRF-DT-INI  TO WS-IRRF-DT-INI.
+           MOVE WFS-IRRF-FII-INI TO WS-IRRF-FII-INI.
            CLOSE STK04.
 
        UPD-INITIAL-CUSTODY.
