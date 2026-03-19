@@ -43,6 +43,7 @@
        77 WS-SYSTEM-TIME        PIC 9(08).
        77 WS-DRAWLINE           PIC X(80) VALUE ALL "_".
        77 WS-BLANK              PIC X(76) VALUE ALL " ".
+       77 WS-FIM-ARQ            PIC X.
        
        01 WS-QUESTION           PIC X.
            88 WS-VALID-QUESTION VALUE 'S' 's' 'N' 'n'.
@@ -142,8 +143,13 @@
        SCREEN SECTION.
        01 CLEAR-SCREEN BLANK SCREEN.
 
-       01 MESSAGE-SCREEN.
-           05 LINE 23 COL 5 FROM WS-MSG BLINK FOREGROUND-COLOR 4.
+       01 MESSAGE-SCR.
+           05 LINE 23 COL 5 FROM WS-MSG FOREGROUND-COLOR 3 HIGHLIGHT.
+
+       01 MESSAGE-ALERT-SCR.
+           05 LINE 23 COL 5 FROM WS-MSG BLINK FOREGROUND-COLOR 4
+                                        HIGHLIGHT.
+
        01 MESSAGE-CLEAR.
            05 LINE 23 COL 5 BLANK LINE.
 
@@ -255,13 +261,14 @@
            05        COL 52 PIC ZZZZZZZ,ZZ USING WS-PRICE.
            05        COL 69 PIC Z.ZZZ.ZZ9,99 FROM WS-BALANCE
                                              REVERSE-VIDEO.
-
-           05 LINE 11 COL  5 VALUE "SEQ"         HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 15 VALUE "ATIVO"       HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 30 VALUE "QUANTIDADE"  HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 50 VALUE "PRECO MEDIO" HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 74 VALUE "POSICAO"     HIGHLIGHT UNDERLINE. 
            05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK       UNDERLINE. 
+
+       01 DEF-CUSTODIA-INICIAL-TITULO-SCR.
+           05 LINE 11 COL  5 VALUE "SEQ"          HIGHLIGHT UNDERLINE. 
+           05 LINE 11 COL 15 VALUE "ATIVO"        HIGHLIGHT UNDERLINE. 
+           05 LINE 11 COL 30 VALUE "QUANTIDADE"   HIGHLIGHT UNDERLINE. 
+           05 LINE 11 COL 50 VALUE "PRECO MEDIO"  HIGHLIGHT UNDERLINE. 
+           05 LINE 11 COL 69 VALUE "       TOTAL" HIGHLIGHT UNDERLINE. 
 
        01 COST-CALC-SCREEN.
            05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
@@ -397,11 +404,12 @@
            PERFORM UPD-INITIAL-LOSS.
 
            MOVE "Data inicial, prejuizos acumulados e IRRF definidos"
-                TO WS-MSG.
+               TO WS-MSG.
            PERFORM MOSTRA-MSG.
 
            MOVE 12 TO WS-LN.
            DISPLAY DEF-CUSTODIA-INICIAL-SCR.
+           DISPLAY DEF-CUSTODIA-INICIAL-TITULO-SCR.
            PERFORM VARYING WS-POS-ARRAY FROM 1 BY 1
                                         UNTIL WS-POS-ARRAY > 100
                                         
@@ -464,7 +472,7 @@
        UPD-CUSTODIA-INICIAL.
            OPEN OUTPUT STK02.
            PERFORM VARYING WS-LN FROM 1 BY 1
-                                        UNTIL WS-LN > WS-POS-ARRAY
+                                        UNTIL WS-LN >= WS-POS-ARRAY
              MOVE WS-STK02-TICKER(WS-LN)  TO WFS-STK02-TICKER
              MOVE WS-STK02-QTY(WS-LN)     TO WFS-STK02-QTY
              MOVE WS-STK02-PRICE(WS-LN)   TO WFS-STK02-PRICE
@@ -478,20 +486,53 @@
            PERFORM READ-INITIAL-LOSS.
            DISPLAY CLEAR-SCREEN.
            DISPLAY DEF-DADOS-INICIAIS-SCR.
-           MOVE "Confirma dados iniciais?" TO WS-MSG.
+           DISPLAY DEF-CUSTODIA-INICIAL-TITULO-SCR.
+ 
+           OPEN INPUT STK02.
+           IF WS-STATUS-STK02 EQUAL TO "35"
+             MOVE "Custodia inicial nao cadastrada" TO WS-MSG
+             PERFORM MOSTRA-MSG-ALERT
+             DISPLAY MESSAGE-CLEAR
+             EXIT PARAGRAPH
+           END-IF.
+           
+           MOVE 12 TO WS-LN.
+           MOVE  1 TO WS-POS-ARRAY.
+           MOVE "N" TO WS-FIM-ARQ.
+           PERFORM LST-CUSTODIA-INICIAL-SEQ UNTIL WS-FIM-ARQ = "S".
+           CLOSE STK02.
+           MOVE "Tecle ENTER para retornar" TO WS-MSG.
            DISPLAY QUESTION.
            ACCEPT QUESTION.
            DISPLAY MESSAGE-CLEAR.
  
-           
 
+       LST-CUSTODIA-INICIAL-SEQ.
+           READ STK02 AT END MOVE "S" TO WS-FIM-ARQ.
 
+           IF WS-STATUS-STK02 = "00"
+             MOVE WFS-STK02-TICKER  TO WS-TICKER
+             MOVE WFS-STK02-QTY     TO WS-QTY-MASK
+             MOVE WFS-STK02-PRICE   TO WS-PRICE-MASK
+             MOVE WFS-STK02-BALANCE TO WS-BALANCE-MASK
 
+             DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
+             DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
+             DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 33
+             DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
+             DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69
 
-
-
-      
-
+             ADD 1 TO WS-LN WS-POS-ARRAY
+             ELSE
+                 IF WS-STATUS-STK02 = "10"
+                     MOVE "Custodia completa" TO WS-MSG
+                     PERFORM MOSTRA-MSG
+                 ELSE
+                     MOVE "Erro lendo o arquivo" TO WS-MSG
+                     PERFORM MOSTRA-MSG-ALERT
+                 END-IF
+                 MOVE "S" TO WS-FIM-ARQ
+           END-IF.
 
 
        NEW-DEF-CUSTODIA.
@@ -507,19 +548,19 @@
               IF NOT WS-VALID-ORDER
                  MOVE "Tipo de ordem invalida. C=Compra / V=Venda"
                       TO WS-MSG
-                 PERFORM MOSTRA-MSG
+                 PERFORM MOSTRA-MSG-ALERT
                  ADD 1 TO WS-VALIDADO
               END-IF
 
               IF NOT WS-VALID-HB
                  MOVE "Campo HB (Home Broker) incorreto." TO WS-MSG
-                 PERFORM MOSTRA-MSG
+                 PERFORM MOSTRA-MSG-ALERT
                  ADD 1 TO WS-VALIDADO
               END-IF
 
               IF NOT WS-VALID-DT
                  MOVE "Campo DT (Day Trade) incorreto" TO WS-MSG
-                 PERFORM MOSTRA-MSG
+                 PERFORM MOSTRA-MSG-ALERT
                  ADD 1 TO WS-VALIDADO
               END-IF
 
@@ -547,10 +588,11 @@
            IF WS-QUESTION = "S" OR WS-QUESTION = "s"
               PERFORM UPD-INITIAL-CUSTODY
               MOVE "Registro incluido na custodia inicial" TO WS-MSG
+              PERFORM MOSTRA-MSG
            ELSE
-              MOVE "Registro desconsiderado" TO WS-MSG
+               MOVE "Registro desconsiderado" TO WS-MSG
+               PERFORM MOSTRA-MSG-ALERT
            END-IF.
-           PERFORM MOSTRA-MSG.
 
        BUYSELL-REG.
            PERFORM CLEAR-LOCAL-FIELDS.
@@ -722,13 +764,15 @@
                WHEN "23"
                   WRITE STK02-REGISTER   
                   MOVE "Novo ativo incluido com sucesso" TO WS-MSG
+                  PERFORM MOSTRA-MSG
                WHEN "00"
                   REWRITE STK02-REGISTER
                   MOVE "Ativo atualizado com sucesso" TO WS-MSG
+                  PERFORM MOSTRA-MSG
                WHEN OTHER 
-                  MOVE "Erro na inclusao do ativo" TO WS-MSG
+                   MOVE "Erro na inclusao do ativo" TO WS-MSG
+                   PERFORM MOSTRA-MSG-ALERT
            END-EVALUATE.
-           PERFORM MOSTRA-MSG.
            CLOSE STK02.
 
 
@@ -836,8 +880,18 @@
            CLOSE STK03.
            EXIT.
 
+       MOSTRA-MSG-ALERT.
+           DISPLAY MESSAGE-ALERT-SCR.
+           MOVE 0 TO CURSOR-VAL.
+           CALL "curs_set" USING BY VALUE CURSOR-VAL.
+           CALL "C$SLEEP" USING WS-DELAY END-CALL.
+           MOVE 1 TO CURSOR-VAL.
+           CALL "curs_set" USING BY VALUE CURSOR-VAL.
+           DISPLAY MESSAGE-CLEAR.
+           EXIT.
+
        MOSTRA-MSG.
-           DISPLAY MESSAGE-SCREEN.
+           DISPLAY MESSAGE-SCR.
            MOVE 0 TO CURSOR-VAL.
            CALL "curs_set" USING BY VALUE CURSOR-VAL.
            CALL "C$SLEEP" USING WS-DELAY END-CALL.
