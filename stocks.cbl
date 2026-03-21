@@ -33,6 +33,7 @@
        77 WS-MSG                PIC X(76)  VALUE SPACES.
        77 WS-LN                 PIC 9(02).
        77 WS-POS-ARRAY          PIC 9(3).
+       77 WS-CONTADOR           PIC 9(3).
        77 WS-CHAVE-PRIMARIA     PIC X(14).
        77 WS-CHK-STOCK          PIC X.
        77 WS-STATUS-STK01       PIC X(02).
@@ -44,6 +45,7 @@
        77 WS-DRAWLINE           PIC X(80) VALUE ALL "_".
        77 WS-BLANK              PIC X(76) VALUE ALL " ".
        77 WS-FIM-ARQ            PIC X.
+       77 WS-SCAN               PIC 9(3).
        
        01 WS-QUESTION           PIC X.
            88 WS-VALID-QUESTION VALUE 'S' 's' 'N' 'n'.
@@ -71,6 +73,10 @@
            03 WS-STK02-BALANCE          PIC 9(07)V99 OCCURS 100 TIMES.
            03 WS-STK02-TOT-BALANCE      PIC 9(08)V99.
            03 WS-STK02-TOT-BALANCE-MASK PIC Z.ZZZ.ZZ9,99.
+
+       01 WS-FLAG-FOUND         PIC 9.
+           88 WS-NOT-FOUND       VALUE 0.
+           88 WS-FOUND           VALUE 1.
 
        01 WS-FLAG               PIC X.
            88 WS-STOCK-SELECT     VALUE 'Y'.
@@ -430,9 +436,10 @@
            PERFORM MOSTRA-MSG.
 
            MOVE 12 TO WS-LN.
+           MOVE  1 TO WS-POS-ARRAY.
            DISPLAY DEF-CUSTODIA-INICIAL-SCR.
-           PERFORM VARYING WS-POS-ARRAY FROM 1 BY 1
-                                        UNTIL WS-POS-ARRAY > 100
+           PERFORM VARYING WS-CONTADOR FROM 1 BY 1
+                                        UNTIL WS-CONTADOR > 100
                                         
               ACCEPT  DEF-CUSTODIA-INICIAL-SCR
               IF WS-TICKER = SPACES 
@@ -470,31 +477,52 @@
                  EXIT PARAGRAPH
               END-IF
 
-              MOVE WS-TICKER  TO WS-STK02-TICKER(WS-POS-ARRAY)
-              MOVE WS-QTY     TO WS-STK02-QTY(WS-POS-ARRAY)
-                                 WS-QTY-MASK
-              MOVE WS-PRICE   TO WS-STK02-PRICE(WS-POS-ARRAY)
-                                 WS-PRICE-MASK
-              MOVE WS-BALANCE TO WS-STK02-BALANCE(WS-POS-ARRAY)
-                                 WS-BALANCE-MASK
+              PERFORM FUNCT-VERIFICA-TICKER-REPETIDO
+              IF WS-NOT-FOUND 
+                MOVE WS-TICKER  TO WS-STK02-TICKER(WS-POS-ARRAY)
+                MOVE WS-QTY     TO WS-STK02-QTY(WS-POS-ARRAY)
+                                   WS-QTY-MASK
+                MOVE WS-PRICE   TO WS-STK02-PRICE(WS-POS-ARRAY)
+                                   WS-PRICE-MASK
+                MOVE WS-BALANCE TO WS-STK02-BALANCE(WS-POS-ARRAY)
+                                   WS-BALANCE-MASK
 
-              IF WS-LN > 21
-                 MOVE 12 TO WS-LN
-                 DISPLAY CLEAR-SCREEN-PART-01
+                IF WS-LN > 21
+                   MOVE 12 TO WS-LN
+                   DISPLAY CLEAR-SCREEN-PART-01
+                END-IF
+
+                DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
+                DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
+                DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 33
+                DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
+                DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69 
+
+                ADD 1 TO WS-LN WS-POS-ARRAY
+
+              ELSE
+                  MOVE "Ativo ja cadastrado" TO WS-MSG
+                  PERFORM MOSTRA-MSG-ALERT
+                  DISPLAY MESSAGE-CLEAR
               END-IF
-
-              DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
-              DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
-              DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 33
-              DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
-              DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69 
 
               MOVE SPACES TO WS-TICKER
               MOVE ZEROES TO WS-QTY WS-PRICE WS-BALANCE
 
-              ADD 1 TO WS-LN
- 
            END-PERFORM.
+
+       FUNCT-VERIFICA-TICKER-REPETIDO.
+           MOVE 0 TO WS-FLAG-FOUND.
+           PERFORM VARYING WS-SCAN FROM 1 BY 1 
+               UNTIL WS-SCAN > WS-POS-ARRAY OR WS-SCAN = 100
+
+               IF WS-TICKER = WS-STK02-TICKER(WS-SCAN)
+                   MOVE 1 TO WS-FLAG-FOUND
+                   EXIT PERFORM
+               END-IF
+           END-PERFORM.
+
+
 
        UPD-CUSTODIA-INICIAL.
            OPEN OUTPUT STK02.
