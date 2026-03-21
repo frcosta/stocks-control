@@ -143,6 +143,22 @@
        SCREEN SECTION.
        01 CLEAR-SCREEN BLANK SCREEN.
 
+       01 CLEAR-SCREEN-PART-00.
+           05 LINE 10 COL 1 BLANK LINE.
+           05 LINE 11 COL 1 BLANK LINE.
+
+       01 CLEAR-SCREEN-PART-01.
+           05 LINE 12 COL 1 BLANK LINE.
+           05 LINE 13 COL 1 BLANK LINE.
+           05 LINE 14 COL 1 BLANK LINE.
+           05 LINE 15 COL 1 BLANK LINE.
+           05 LINE 16 COL 1 BLANK LINE.
+           05 LINE 17 COL 1 BLANK LINE.
+           05 LINE 18 COL 1 BLANK LINE.
+           05 LINE 19 COL 1 BLANK LINE.
+           05 LINE 20 COL 1 BLANK LINE.
+           05 LINE 21 COL 1 BLANK LINE.
+
        01 MESSAGE-SCR.
            05 LINE 23 COL 5 FROM WS-MSG FOREGROUND-COLOR 3 HIGHLIGHT.
 
@@ -261,14 +277,20 @@
            05        COL 52 PIC ZZZZZZZ,ZZ USING WS-PRICE.
            05        COL 69 PIC Z.ZZZ.ZZ9,99 FROM WS-BALANCE
                                              REVERSE-VIDEO.
+           05 LINE 11 COL  5 VALUE "SEQ"          HIGHLIGHT UNDERLINE. 
+           05         COL 15 VALUE "ATIVO"        HIGHLIGHT UNDERLINE. 
+           05         COL 30 VALUE "QUANTIDADE"   HIGHLIGHT UNDERLINE. 
+           05         COL 50 VALUE "PRECO MEDIO"  HIGHLIGHT UNDERLINE. 
+           05         COL 69 VALUE "       TOTAL" HIGHLIGHT UNDERLINE. 
+
            05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK       UNDERLINE. 
 
        01 DEF-CUSTODIA-INICIAL-TITULO-SCR.
-           05 LINE 11 COL  5 VALUE "SEQ"          HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 15 VALUE "ATIVO"        HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 30 VALUE "QUANTIDADE"   HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 50 VALUE "PRECO MEDIO"  HIGHLIGHT UNDERLINE. 
-           05 LINE 11 COL 69 VALUE "       TOTAL" HIGHLIGHT UNDERLINE. 
+           05 LINE 09 COL  5 VALUE "SEQ"          HIGHLIGHT UNDERLINE. 
+           05         COL 15 VALUE "ATIVO"        HIGHLIGHT UNDERLINE. 
+           05         COL 30 VALUE "QUANTIDADE"   HIGHLIGHT UNDERLINE. 
+           05         COL 50 VALUE "PRECO MEDIO"  HIGHLIGHT UNDERLINE. 
+           05         COL 69 VALUE "       TOTAL" HIGHLIGHT UNDERLINE. 
 
        01 COST-CALC-SCREEN.
            05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
@@ -409,7 +431,6 @@
 
            MOVE 12 TO WS-LN.
            DISPLAY DEF-CUSTODIA-INICIAL-SCR.
-           DISPLAY DEF-CUSTODIA-INICIAL-TITULO-SCR.
            PERFORM VARYING WS-POS-ARRAY FROM 1 BY 1
                                         UNTIL WS-POS-ARRAY > 100
                                         
@@ -457,6 +478,11 @@
               MOVE WS-BALANCE TO WS-STK02-BALANCE(WS-POS-ARRAY)
                                  WS-BALANCE-MASK
 
+              IF WS-LN > 21
+                 MOVE 12 TO WS-LN
+                 DISPLAY CLEAR-SCREEN-PART-01
+              END-IF
+
               DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
               DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
               DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 33
@@ -467,6 +493,7 @@
               MOVE ZEROES TO WS-QTY WS-PRICE WS-BALANCE
 
               ADD 1 TO WS-LN
+ 
            END-PERFORM.
 
        UPD-CUSTODIA-INICIAL.
@@ -496,7 +523,7 @@
              EXIT PARAGRAPH
            END-IF.
            
-           MOVE 12 TO WS-LN.
+           MOVE 10 TO WS-LN.
            MOVE  1 TO WS-POS-ARRAY.
            MOVE "N" TO WS-FIM-ARQ.
            PERFORM LST-CUSTODIA-INICIAL-SEQ UNTIL WS-FIM-ARQ = "S".
@@ -522,7 +549,19 @@
              DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
              DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69
 
-             ADD 1 TO WS-LN WS-POS-ARRAY
+             IF WS-LN < 21
+                 ADD 1 TO WS-LN
+             ELSE
+                 MOVE 10 TO WS-LN
+                 MOVE "Continua... Pressione ENTER" TO WS-MSG
+                 DISPLAY QUESTION
+                 ACCEPT QUESTION
+                 DISPLAY MESSAGE-CLEAR
+                 DISPLAY CLEAR-SCREEN-PART-00
+                 DISPLAY CLEAR-SCREEN-PART-01
+             END-IF
+
+             ADD 1 TO WS-POS-ARRAY
              ELSE
                  IF WS-STATUS-STK02 = "10"
                      MOVE "Custodia completa" TO WS-MSG
