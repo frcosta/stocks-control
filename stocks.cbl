@@ -29,6 +29,7 @@
        77 CURSOR-VAL            PIC S9(4) COMP VALUE 0.
        77 WS-CRT-STATUS         PIC 9(04).
        77 WS-DELAY              PIC 9V9999 VALUE 2,0. *> 2,0 seg
+       77 MSGDELAY              PIC 9V9999 VALUE 3,0. *> 3,0 seg
        77 WS-VALIDADO           PIC 9(02) VALUE 0.
        77 WS-MSG                PIC X(76)  VALUE SPACES.
        77 WS-LN                 PIC 9(02).
@@ -65,6 +66,14 @@
            78 WS-OUTROS-TX        VALUE 0,059.
            78 WS-IRRF-DT          VALUE 0,01.
            78 WS-IRRF-ST          VALUE 0,00005.
+
+       01 CONST-MSG             PIC X.
+           78 MSGSTD              VALUE 'S'.
+           78 MSGALERT            VALUE 'A'.
+           78 MSGVOID             VALUE 'V'.
+           78 MSGQUESTION         VALUE 'Q'.
+           78 MSGYESNO            VALUE 'Y'.
+           
 
        01 STK02-REGISTER-LOCAL.
            03 WS-STK02-TICKER           PIC X(10)    OCCURS 100 TIMES.
@@ -165,26 +174,28 @@
            05 LINE 20 COL 1 BLANK LINE.
            05 LINE 21 COL 1 BLANK LINE.
 
-       01 MESSAGE-SCR.
-           05 LINE 23 COL 5 FROM WS-MSG FOREGROUND-COLOR 3 HIGHLIGHT.
+      * 01 MESSAGE-SCR.
+      *     05 LINE 23 COL 5 FROM WS-MSG FOREGROUND-COLOR 3 HIGHLIGHT.
 
-       01 MESSAGE-ALERT-SCR.
-           05 LINE 23 COL 5 FROM WS-MSG BLINK FOREGROUND-COLOR 4
-                                        HIGHLIGHT.
+      * 01 MESSAGE-ALERT-SCR.
+      *     05 LINE 23 COL 5 FROM WS-MSG BLINK FOREGROUND-COLOR 4
+      *                                  HIGHLIGHT.
 
-       01 MESSAGE-CLEAR.
-           05 LINE 23 COL 5 BLANK LINE.
+      
+      * 01 MESSAGE-CLEAR.
+      *     05 LINE 23 COL 5 BLANK LINE.
 
-       01 PRT-MSG.
-           05 LINE 23 COL 5 PIC X(76) FROM WS-MSG FOREGROUND-COLOR 3.
+      * 01 PRT-MSG.
+      *     05 LINE 23 COL 5 PIC X(76) FROM WS-MSG FOREGROUND-COLOR 3.
  
-       01 QUESTION.
-           05 LINE 23 COL 5 VALUE "[ ] ".
-           05 LINE 23 COL 9 PIC X(40) FROM WS-MSG FOREGROUND-COLOR 3
-                                      HIGHLIGHT.
-           05 LINE 23 COL 6 PIC X TO WS-QUESTION HIGHLIGHT.
+      * 01 QUESTION.
+      *     05 LINE 23 COL 5 VALUE "[ ] ".
+      *     05 LINE 23 COL 9 PIC X(40) FROM WS-MSG FOREGROUND-COLOR 3
+      *                                HIGHLIGHT.
+      *     05 LINE 23 COL 6 PIC X TO WS-QUESTION HIGHLIGHT.
 
        01 MENU-PRINCIPAL2-SCREEN.
+          05 BLANK SCREEN.
           05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
           05 LINE 1  COL 60 VALUE "CONTROLE DE PORTFOLIO" UNDERLINE
                                                           HIGHLIGHT. 
@@ -193,12 +204,8 @@
           05 LINE 4  COL 5 VALUE "Configuracoes Iniciais" UNDERLINE 
                                   FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 5  COL 5 VALUE "a) Definir custodia inicial".
-          05 LINE 5  COL 45 VALUE "d) Exibir dados iniciais".
-
-          05 LINE 6  COL 5 VALUE "b) Definir prejuizos acumulados".
-          05 LINE 6  COL 45 VALUE "e) Exibir prejuizos acumulados".
-          05 LINE 7  COL 5 VALUE "c) Definir data inicial".
-          05 LINE 7  COL 45 VALUE "c) Redefinir configuracoes iniciais".
+          05 LINE 6  COL 5 VALUE "b) Consultar dados iniciais".
+          05 LINE 7  COL 5 VALUE "c) Redefinir configuracoes iniciais".
           05 LINE 9  COL 5 VALUE "Lancamentos" UNDERLINE
                                   FOREGROUND-COLOR 1 HIGHLIGHT.
           05 LINE 10 COL 5 VALUE "1.Lancar ordens de compra e venda".
@@ -216,13 +223,13 @@
           05 LINE 21 COL 5 VALUE "8.Encerrar sistema".
           05 LINE 23 COL 5 VALUE "Selecione opcao"
                                   FOREGROUND-COLOR 3 HIGHLIGHT.
-          05 LINE 23 COL 21 PIC X TO WS-SELECT-OPTION AUTO.
+          05 LINE 23 COL 21 PIC X USING WS-SELECT-OPTION AUTO.
           05 LINE 24 COL 5 PIC X(76) FROM WS-BLANK UNDERLINE. 
  
-       01 MENU-INPUT-CONFIRM.
-           05 LINE 23    COL 5 VALUE "Confirma lancamento (S/N) ?"
-                                  FOREGROUND-COLOR 3 HIGHLIGHT.
-           05 LINE 23    COL PLUS 2 PIC X TO WS-QUESTION.
+      * 01 MENU-INPUT-CONFIRM.
+      *     05 LINE 23    COL 5 VALUE "Confirma lancamento (S/N) ?"
+      *                            FOREGROUND-COLOR 3 HIGHLIGHT.
+      *     05 LINE 23    COL PLUS 2 PIC X TO WS-QUESTION.
        01 LIST-CUSTODY.
            05 LINE 1  COL 1 FROM WS-DRAWLINE LOWLIGHT.
            05 LINE 1  COL 1 VALUE "Custody Report  ".
@@ -387,14 +394,16 @@
 
        INICIO.
            PERFORM UNTIL WS-SELECT-OPTION = '8' 
-              DISPLAY CLEAR-SCREEN
               DISPLAY MENU-PRINCIPAL2-SCREEN
+
+              MOVE SPACE TO WS-SELECT-OPTION
               ACCEPT MENU-PRINCIPAL2-SCREEN
+
               EVALUATE WS-SELECT-OPTION
                   WHEN 'a'
                       PERFORM DEF-CUSTODIA-INICIAL
                       MOVE SPACE TO WS-SELECT-OPTION
-                  WHEN 'd'
+                  WHEN 'b'
                       PERFORM LST-CUSTODIA-INICIAL
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '1'
@@ -418,12 +427,10 @@
            DISPLAY DEF-DADOS-INICIAIS-SCR.
            ACCEPT DEF-DADOS-INICIAIS-SCR.
 
-           MOVE "Confirma dados iniciais?" TO WS-MSG.
-           DISPLAY QUESTION.
-           PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
-              ACCEPT QUESTION
-           END-PERFORM.
-           IF WS-QUESTION NOT = "S" AND WS-QUESTION NOT = "s"
+           CALL 'showmsg' USING "Confirma dados iniciais??",
+                          MSGYESNO, MSGDELAY, WS-QUESTION
+
+           IF WS-QUESTION NOT = "S"
               EXIT PARAGRAPH
               END-IF.
 
@@ -431,9 +438,8 @@
 
            PERFORM UPD-INITIAL-LOSS.
 
-           MOVE "Data inicial, prejuizos acumulados e IRRF definidos"
-               TO WS-MSG.
-           PERFORM MOSTRA-MSG.
+           CALL 'showmsg' USING "Dados iniciais definidos ",
+                          MSGSTD, MSGDELAY.
 
            MOVE 12 TO WS-LN.
            MOVE  1 TO WS-POS-ARRAY.
@@ -446,13 +452,11 @@
                 IF WS-POS-ARRAY = 1
                   EXIT PERFORM 
                 END-IF
-                MOVE "Confirma inclusao da custodia inicial?" TO WS-MSG
-                DISPLAY QUESTION
-                PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
-                  ACCEPT QUESTION
-                END-PERFORM
-                DISPLAY MESSAGE-CLEAR
-                IF WS-QUESTION NOT = "S" AND WS-QUESTION NOT = "s"
+
+                CALL 'showmsg' USING "Confirma inclusao da custodia?",
+                               MSGYESNO, MSGDELAY, WS-QUESTION
+
+                IF WS-QUESTION NOT = "S"
                     EXIT PARAGRAPH
                 ELSE
                     PERFORM UPD-CUSTODIA-INICIAL
@@ -467,13 +471,10 @@
               MOVE FUNCTION TRIM(WS-TICKER LEADING)  TO WS-TICKER
               DISPLAY DEF-CUSTODIA-INICIAL-SCR
 
-              MOVE "Confirma lancamento?" TO WS-MSG
-              DISPLAY QUESTION
-              PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
-                 ACCEPT QUESTION
-              END-PERFORM
-              DISPLAY MESSAGE-CLEAR
-              IF WS-QUESTION NOT = "S" AND WS-QUESTION NOT = "s"
+              CALL 'showmsg' USING "Confirma lancamento?",
+                               MSGYESNO, MSGDELAY, WS-QUESTION
+
+              IF WS-QUESTION NOT = "S"
                  EXIT PARAGRAPH
               END-IF
 
@@ -499,11 +500,9 @@
                 DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69 
 
                 ADD 1 TO WS-LN WS-POS-ARRAY
-
-              ELSE
-                  MOVE "Ativo ja cadastrado" TO WS-MSG
-                  PERFORM MOSTRA-MSG-ALERT
-                  DISPLAY MESSAGE-CLEAR
+             ELSE
+              CALL 'showmsg' USING "Ativo ja cadastrado",
+                            MSGALERT, MSGDELAY
               END-IF
 
               MOVE SPACES TO WS-TICKER
@@ -545,9 +544,8 @@
  
            OPEN INPUT STK02.
            IF WS-STATUS-STK02 EQUAL TO "35"
-             MOVE "Custodia inicial nao cadastrada" TO WS-MSG
-             PERFORM MOSTRA-MSG-ALERT
-             DISPLAY MESSAGE-CLEAR
+             CALL 'showmsg' USING "Custodia nao cadastrada",
+                            MSGALERT, MSGDELAY
              EXIT PARAGRAPH
            END-IF.
            
@@ -556,11 +554,9 @@
            MOVE "N" TO WS-FIM-ARQ.
            PERFORM LST-CUSTODIA-INICIAL-SEQ UNTIL WS-FIM-ARQ = "S".
            CLOSE STK02.
-           MOVE "Tecle ENTER para retornar" TO WS-MSG.
-           DISPLAY QUESTION.
-           ACCEPT QUESTION.
-           DISPLAY MESSAGE-CLEAR.
- 
+
+           CALL 'showmsg' USING "Tecle ENTER para retornar",
+                          MSGVOID, MSGDELAY.
 
        LST-CUSTODIA-INICIAL-SEQ.
            READ STK02 AT END MOVE "S" TO WS-FIM-ARQ.
@@ -581,10 +577,10 @@
                  ADD 1 TO WS-LN
              ELSE
                  MOVE 10 TO WS-LN
-                 MOVE "Continua... Pressione ENTER" TO WS-MSG
-                 DISPLAY QUESTION
-                 ACCEPT QUESTION
-                 DISPLAY MESSAGE-CLEAR
+
+                 CALL 'showmsg' USING "Continua... Pressione ENTER",
+                                MSGVOID, MSGDELAY
+
                  DISPLAY CLEAR-SCREEN-PART-00
                  DISPLAY CLEAR-SCREEN-PART-01
              END-IF
@@ -592,74 +588,74 @@
              ADD 1 TO WS-POS-ARRAY
              ELSE
                  IF WS-STATUS-STK02 = "10"
-                     MOVE "Custodia completa" TO WS-MSG
-                     PERFORM MOSTRA-MSG
+                     CALL 'showmsg' USING "Custodia completa",
+                                    MSGSTD, MSGDELAY
                  ELSE
-                     MOVE "Erro lendo o arquivo" TO WS-MSG
-                     PERFORM MOSTRA-MSG-ALERT
+                     CALL 'showmsg' USING "Erro lendo o arquivo",
+                                    MSGALERT, MSGDELAY
                  END-IF
                  MOVE "S" TO WS-FIM-ARQ
            END-IF.
 
 
-       NEW-DEF-CUSTODIA.
-
-           PERFORM CLEAR-LOCAL-FIELDS.
-           DISPLAY CLEAR-SCREEN.
-           DISPLAY COST-CALC-SCREEN.
-
-           PERFORM WITH TEST AFTER UNTIL WS-VALIDADO = 0
-              MOVE 0 TO WS-VALIDADO
-              ACCEPT COST-CALC-SCREEN
-
-              IF NOT WS-VALID-ORDER
-                 MOVE "Tipo de ordem invalida. C=Compra / V=Venda"
-                      TO WS-MSG
-                 PERFORM MOSTRA-MSG-ALERT
-                 ADD 1 TO WS-VALIDADO
-              END-IF
-
-              IF NOT WS-VALID-HB
-                 MOVE "Campo HB (Home Broker) incorreto." TO WS-MSG
-                 PERFORM MOSTRA-MSG-ALERT
-                 ADD 1 TO WS-VALIDADO
-              END-IF
-
-              IF NOT WS-VALID-DT
-                 MOVE "Campo DT (Day Trade) incorreto" TO WS-MSG
-                 PERFORM MOSTRA-MSG-ALERT
-                 ADD 1 TO WS-VALIDADO
-              END-IF
-
-           END-PERFORM.
-
-           MOVE FUNCTION UPPER-CASE(WS-ORDER)  TO WS-ORDER.
-           MOVE FUNCTION UPPER-CASE(WS-TICKER) TO WS-TICKER.
-           MOVE FUNCTION UPPER-CASE(WS-HB)     TO WS-HB.
-           MOVE FUNCTION UPPER-CASE(WS-DT)     TO WS-DT.
-
-           PERFORM CALCULA.
-
-           IF WS-HB-COST NOT = WFS-HB-COST
-               OR WS-DESK-COST NOT = WFS-DESK-COST
-               PERFORM UPDATE-BROKE-COST
-           END-IF.
-
-           DISPLAY COST-CALC-SCREEN.
-
-           MOVE "Confirma inclusao do registro?" TO WS-MSG.
-           DISPLAY QUESTION.
-           PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
-              ACCEPT QUESTION
-           END-PERFORM.
-           IF WS-QUESTION = "S" OR WS-QUESTION = "s"
-              PERFORM UPD-INITIAL-CUSTODY
-              MOVE "Registro incluido na custodia inicial" TO WS-MSG
-              PERFORM MOSTRA-MSG
-           ELSE
-               MOVE "Registro desconsiderado" TO WS-MSG
-               PERFORM MOSTRA-MSG-ALERT
-           END-IF.
+      * NEW-DEF-CUSTODIA.
+      *
+      *     PERFORM CLEAR-LOCAL-FIELDS.
+      *     DISPLAY CLEAR-SCREEN.
+      *     DISPLAY COST-CALC-SCREEN.
+      *
+      *     PERFORM WITH TEST AFTER UNTIL WS-VALIDADO = 0
+      *        MOVE 0 TO WS-VALIDADO
+      *        ACCEPT COST-CALC-SCREEN
+      *
+      *        IF NOT WS-VALID-ORDER
+      *           MOVE "Tipo de ordem invalida. C=Compra / V=Venda"
+      *                TO WS-MSG
+      *           PERFORM MOSTRA-MSG-ALERT
+      *           ADD 1 TO WS-VALIDADO
+      *        END-IF
+      *    
+      *        IF NOT WS-VALID-HB
+      *           MOVE "Campo HB (Home Broker) incorreto." TO WS-MSG
+      *           PERFORM MOSTRA-MSG-ALERT
+      *           ADD 1 TO WS-VALIDADO
+      *        END-IF
+      *
+      *        IF NOT WS-VALID-DT
+      *           MOVE "Campo DT (Day Trade) incorreto" TO WS-MSG
+      *           PERFORM MOSTRA-MSG-ALERT
+      *           ADD 1 TO WS-VALIDADO
+      *        END-IF
+      *
+      *     END-PERFORM.
+      * 
+      *     MOVE FUNCTION UPPER-CASE(WS-ORDER)  TO WS-ORDER.
+      *     MOVE FUNCTION UPPER-CASE(WS-TICKER) TO WS-TICKER.
+      *     MOVE FUNCTION UPPER-CASE(WS-HB)     TO WS-HB.
+      *     MOVE FUNCTION UPPER-CASE(WS-DT)     TO WS-DT.
+      *
+      *     PERFORM CALCULA.
+      *
+      *     IF WS-HB-COST NOT = WFS-HB-COST
+      *         OR WS-DESK-COST NOT = WFS-DESK-COST
+      *         PERFORM UPDATE-BROKE-COST
+      *     END-IF.
+      *
+      *     DISPLAY COST-CALC-SCREEN.
+      * 
+      *     MOVE "Confirma inclusao do registro?" TO WS-MSG.
+      *     DISPLAY QUESTION.
+      *     PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
+      *        ACCEPT QUESTION
+      *     END-PERFORM.
+      *     IF WS-QUESTION = "S" OR WS-QUESTION = "s"
+      *        PERFORM UPD-INITIAL-CUSTODY
+      *        MOVE "Registro incluido na custodia inicial" TO WS-MSG
+      *        PERFORM MOSTRA-MSG
+      *     ELSE
+      *         MOVE "Registro desconsiderado" TO WS-MSG
+      *         PERFORM MOSTRA-MSG-ALERT
+      *     END-IF.
 
        BUYSELL-REG.
            PERFORM CLEAR-LOCAL-FIELDS.
@@ -675,13 +671,12 @@
 
            DISPLAY COST-CALC-SCREEN.
 
-           DISPLAY MENU-INPUT-CONFIRM.
-           MOVE SPACE TO WS-SELECT-OPTION.
-           ACCEPT MENU-INPUT-CONFIRM.
-           IF WS-SELECT-OPTION = "S" OR WS-SELECT-OPTION = "s"
-              MOVE "Registro Incluido" TO WS-MSG
-              DISPLAY PRT-MSG
-              CALL "C$SLEEP" USING WS-DELAY END-CALL
+           CALL 'showmsg' USING "Confirma lancamento?",
+                          MSGYESNO, MSGDELAY, WS-QUESTION
+
+           IF WS-QUESTION = "S"
+              CALL 'showmsg' USING "Registro incluido",
+                             MSGSTD, MSGDELAY
               PERFORM UPD-REGISTER
            END-IF.
 
@@ -829,16 +824,16 @@
  
            EVALUATE WS-STATUS-STK02
                WHEN "23"
-                  WRITE STK02-REGISTER   
-                  MOVE "Novo ativo incluido com sucesso" TO WS-MSG
-                  PERFORM MOSTRA-MSG
+                 WRITE STK02-REGISTER   
+                 CALL 'showmsg' USING "Novo ativo incluido com sucesso",
+                                MSGSTD, MSGDELAY
                WHEN "00"
-                  REWRITE STK02-REGISTER
-                  MOVE "Ativo atualizado com sucesso" TO WS-MSG
-                  PERFORM MOSTRA-MSG
+                 REWRITE STK02-REGISTER
+                 CALL 'showmsg' USING "Ativo atualizado com sucesso",
+                                MSGSTD, MSGDELAY
                WHEN OTHER 
-                   MOVE "Erro na inclusao do ativo" TO WS-MSG
-                   PERFORM MOSTRA-MSG-ALERT
+                 CALL 'showmsg' USING "Erro na inclusao do ativo",
+                                MSGALERT, MSGDELAY
            END-EVALUATE.
            CLOSE STK02.
 
@@ -947,24 +942,24 @@
            CLOSE STK03.
            EXIT.
 
-       MOSTRA-MSG-ALERT.
-           DISPLAY MESSAGE-ALERT-SCR.
-           MOVE 0 TO CURSOR-VAL.
-           CALL "curs_set" USING BY VALUE CURSOR-VAL.
-           CALL "C$SLEEP" USING WS-DELAY END-CALL.
-           MOVE 1 TO CURSOR-VAL.
-           CALL "curs_set" USING BY VALUE CURSOR-VAL.
-           DISPLAY MESSAGE-CLEAR.
-           EXIT.
+      * MOSTRA-MSG-ALERT.
+      *     DISPLAY MESSAGE-ALERT-SCR.
+      *     MOVE 0 TO CURSOR-VAL.
+      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
+      *     CALL "C$SLEEP" USING WS-DELAY END-CALL.
+      *     MOVE 1 TO CURSOR-VAL.
+      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
+      *     DISPLAY MESSAGE-CLEAR.
+      *     EXIT.
 
-       MOSTRA-MSG.
-           DISPLAY MESSAGE-SCR.
-           MOVE 0 TO CURSOR-VAL.
-           CALL "curs_set" USING BY VALUE CURSOR-VAL.
-           CALL "C$SLEEP" USING WS-DELAY END-CALL.
-           MOVE 1 TO CURSOR-VAL.
-           CALL "curs_set" USING BY VALUE CURSOR-VAL.
-           DISPLAY MESSAGE-CLEAR.
-           EXIT.
+      * MOSTRA-MSG.
+      *     DISPLAY MESSAGE-SCR.
+      *     MOVE 0 TO CURSOR-VAL.
+      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
+      *     CALL "C$SLEEP" USING WS-DELAY END-CALL.
+      *     MOVE 1 TO CURSOR-VAL.
+      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
+      *     DISPLAY MESSAGE-CLEAR.
+      *     EXIT.
 
 

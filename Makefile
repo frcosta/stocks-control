@@ -1,7 +1,7 @@
 all: stocks.exe
 
 stocks.exe: stocks.cbl sortfile.cbl
-	cobc -x stocks.cbl sortfile.cbl -o stocks.exe
+	cobc -x stocks.cbl sortfile.cbl fmsgs.cbl -o stocks.exe
 
 %.exe: %.cbl
 	cobc -x $< -o $@
