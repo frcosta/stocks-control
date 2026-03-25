@@ -47,6 +47,7 @@
        77 WS-BLANK              PIC X(76) VALUE ALL " ".
        77 WS-FIM-ARQ            PIC X.
        77 WS-SCAN               PIC 9(3).
+       77 WS-STATUS             PIC X.
        
        01 WS-QUESTION           PIC X.
            88 WS-VALID-QUESTION VALUE 'S' 's' 'N' 'n'.
@@ -174,26 +175,6 @@
            05 LINE 20 COL 1 BLANK LINE.
            05 LINE 21 COL 1 BLANK LINE.
 
-      * 01 MESSAGE-SCR.
-      *     05 LINE 23 COL 5 FROM WS-MSG FOREGROUND-COLOR 3 HIGHLIGHT.
-
-      * 01 MESSAGE-ALERT-SCR.
-      *     05 LINE 23 COL 5 FROM WS-MSG BLINK FOREGROUND-COLOR 4
-      *                                  HIGHLIGHT.
-
-      
-      * 01 MESSAGE-CLEAR.
-      *     05 LINE 23 COL 5 BLANK LINE.
-
-      * 01 PRT-MSG.
-      *     05 LINE 23 COL 5 PIC X(76) FROM WS-MSG FOREGROUND-COLOR 3.
- 
-      * 01 QUESTION.
-      *     05 LINE 23 COL 5 VALUE "[ ] ".
-      *     05 LINE 23 COL 9 PIC X(40) FROM WS-MSG FOREGROUND-COLOR 3
-      *                                HIGHLIGHT.
-      *     05 LINE 23 COL 6 PIC X TO WS-QUESTION HIGHLIGHT.
-
        01 MENU-PRINCIPAL2-SCREEN.
           05 BLANK SCREEN.
           05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
@@ -226,10 +207,6 @@
           05 LINE 23 COL 21 PIC X USING WS-SELECT-OPTION AUTO.
           05 LINE 24 COL 5 PIC X(76) FROM WS-BLANK UNDERLINE. 
  
-      * 01 MENU-INPUT-CONFIRM.
-      *     05 LINE 23    COL 5 VALUE "Confirma lancamento (S/N) ?"
-      *                            FOREGROUND-COLOR 3 HIGHLIGHT.
-      *     05 LINE 23    COL PLUS 2 PIC X TO WS-QUESTION.
        01 LIST-CUSTODY.
            05 LINE 1  COL 1 FROM WS-DRAWLINE LOWLIGHT.
            05 LINE 1  COL 1 VALUE "Custody Report  ".
@@ -315,18 +292,17 @@
            05         COL PLUS 1 VALUE "/".
            05         COL PLUS 1 PIC 99 USING WS-ANO AUTO.
            05         COL PLUS 2 VALUE "ORDEM" HIGHLIGHT.
-           05         COL PLUS 2 PIC X USING WS-ORDER AUTO REQUIRED.
+           05         COL PLUS 2 PIC X USING WS-ORDER AUTO.
            05         COL PLUS 2 VALUE "TICKER" HIGHLIGHT.
            05         COL PLUS 2 PIC X(10) USING WS-TICKER.
            05         COL PLUS 2 VALUE "QTD" HIGHLIGHT.
-           05         COL PLUS 2 PIC ZZZZZZ USING WS-QTY REQUIRED.
+           05         COL PLUS 2 PIC ZZZZZZ USING WS-QTY.
            05         COL PLUS 2 VALUE "PRECO" HIGHLIGHT.
-           05         COL PLUS 2 PIC ZZZZZZZ,ZZ USING WS-PRICE
-                                 REQUIRED.
+           05         COL PLUS 2 PIC ZZZZZZZ,ZZ USING WS-PRICE.
            05         COL PLUS 4 VALUE "HB" HIGHLIGHT.
-           05         COL PLUS 2 PIC X USING WS-HB AUTO REQUIRED.
+           05         COL PLUS 2 PIC X USING WS-HB AUTO.
            05         COL PLUS 4 VALUE "DT" HIGHLIGHT.
-           05         COL PLUS 2 PIC X USING WS-DT AUTO REQUIRED.
+           05         COL PLUS 2 PIC X USING WS-DT AUTO.
            05 LINE 5  COL  5 VALUE "Corretagem HB    ".
            05         COL 29 PIC ZZ,ZZ USING WS-HB-COST HIGHLIGHT.
            05 LINE 6  COL  5 VALUE "Corretagem Mesa  ".
@@ -407,7 +383,7 @@
                       PERFORM LST-CUSTODIA-INICIAL
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '1'
-                      PERFORM BUYSELL-REG
+                      PERFORM REG-BUY-SELL
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '2'
                       PERFORM LST-CUSTODY
@@ -598,88 +574,85 @@
            END-IF.
 
 
-      * NEW-DEF-CUSTODIA.
-      *
-      *     PERFORM CLEAR-LOCAL-FIELDS.
-      *     DISPLAY CLEAR-SCREEN.
-      *     DISPLAY COST-CALC-SCREEN.
-      *
-      *     PERFORM WITH TEST AFTER UNTIL WS-VALIDADO = 0
-      *        MOVE 0 TO WS-VALIDADO
-      *        ACCEPT COST-CALC-SCREEN
-      *
-      *        IF NOT WS-VALID-ORDER
-      *           MOVE "Tipo de ordem invalida. C=Compra / V=Venda"
-      *                TO WS-MSG
-      *           PERFORM MOSTRA-MSG-ALERT
-      *           ADD 1 TO WS-VALIDADO
-      *        END-IF
-      *    
-      *        IF NOT WS-VALID-HB
-      *           MOVE "Campo HB (Home Broker) incorreto." TO WS-MSG
-      *           PERFORM MOSTRA-MSG-ALERT
-      *           ADD 1 TO WS-VALIDADO
-      *        END-IF
-      *
-      *        IF NOT WS-VALID-DT
-      *           MOVE "Campo DT (Day Trade) incorreto" TO WS-MSG
-      *           PERFORM MOSTRA-MSG-ALERT
-      *           ADD 1 TO WS-VALIDADO
-      *        END-IF
-      *
-      *     END-PERFORM.
-      * 
-      *     MOVE FUNCTION UPPER-CASE(WS-ORDER)  TO WS-ORDER.
-      *     MOVE FUNCTION UPPER-CASE(WS-TICKER) TO WS-TICKER.
-      *     MOVE FUNCTION UPPER-CASE(WS-HB)     TO WS-HB.
-      *     MOVE FUNCTION UPPER-CASE(WS-DT)     TO WS-DT.
-      *
-      *     PERFORM CALCULA.
-      *
-      *     IF WS-HB-COST NOT = WFS-HB-COST
-      *         OR WS-DESK-COST NOT = WFS-DESK-COST
-      *         PERFORM UPDATE-BROKE-COST
-      *     END-IF.
-      *
-      *     DISPLAY COST-CALC-SCREEN.
-      * 
-      *     MOVE "Confirma inclusao do registro?" TO WS-MSG.
-      *     DISPLAY QUESTION.
-      *     PERFORM WITH TEST AFTER UNTIL WS-VALID-QUESTION
-      *        ACCEPT QUESTION
-      *     END-PERFORM.
-      *     IF WS-QUESTION = "S" OR WS-QUESTION = "s"
-      *        PERFORM UPD-INITIAL-CUSTODY
-      *        MOVE "Registro incluido na custodia inicial" TO WS-MSG
-      *        PERFORM MOSTRA-MSG
-      *     ELSE
-      *         MOVE "Registro desconsiderado" TO WS-MSG
-      *         PERFORM MOSTRA-MSG-ALERT
-      *     END-IF.
-
-       BUYSELL-REG.
+       REG-BUY-SELL.                                  *> Registra Ordens de compra e venda de ativos
            PERFORM CLEAR-LOCAL-FIELDS.
            DISPLAY CLEAR-SCREEN.
            DISPLAY COST-CALC-SCREEN.
-           ACCEPT COST-CALC-SCREEN.
-           PERFORM CALCULA.
 
-           IF WS-HB-COST NOT = WFS-HB-COST
-               OR WS-DESK-COST NOT = WFS-DESK-COST
-               PERFORM UPDATE-BROKE-COST
-           END-IF.
+           MOVE SPACE TO WS-STATUS.
+           PERFORM VARYING WS-CONTADOR FROM 1 BY 1 UNTIL WS-STATUS = "F"
+              MOVE ZERO TO WS-FLAG-FOUND
+              ACCEPT COST-CALC-SCREEN
 
-           DISPLAY COST-CALC-SCREEN.
+              MOVE FUNCTION UPPER-CASE(WS-ORDER)   TO WS-ORDER
+              MOVE FUNCTION UPPER-CASE(WS-TICKER)  TO WS-TICKER
+              MOVE FUNCTION UPPER-CASE(WS-HB)      TO WS-HB
+              MOVE FUNCTION UPPER-CASE(WS-DT)      TO WS-DT
 
-           CALL 'showmsg' USING "Confirma lancamento?",
-                          MSGYESNO, MSGDELAY, WS-QUESTION
+              IF WS-TICKER = SPACES
+                  EXIT PERFORM
+              END-IF
 
-           IF WS-QUESTION = "S"
-              CALL 'showmsg' USING "Registro incluido",
-                             MSGSTD, MSGDELAY
-              PERFORM UPD-REGISTER
-           END-IF.
+              IF WS-ORDER NOT = "C" AND WS-ORDER NOT = "V"
+                CALL 'showmsg' USING "Ordem aceita [C]ompra ou [V]enda",
+                               MSGALERT, MSGDELAY
+                MOVE 1 TO WS-FLAG-FOUND
+              END-IF
 
+              IF WS-QTY = 0
+                CALL 'showmsg' USING "Qtd. deve ser maior que zero",
+                               MSGALERT, MSGDELAY
+                MOVE 1 TO WS-FLAG-FOUND
+              END-IF
+
+              IF WS-PRICE = 0 
+                CALL 'showmsg' USING "Preco deve ser maior que zero",
+                               MSGALERT, MSGDELAY
+                MOVE 1 TO WS-FLAG-FOUND
+              END-IF
+
+              IF WS-DT NOT = "S" AND WS-DT NOT = "N"
+                CALL 'showmsg' USING "DT deve ser [S]im ou [N]ao",
+                               MSGALERT, MSGDELAY
+                MOVE 1 TO WS-FLAG-FOUND
+              END-IF
+
+              IF WS-HB NOT = "S" AND WS-HB NOT = "N"
+                CALL 'showmsg' USING "HB deve ser [S]im ou [N]ao",
+                               MSGALERT, MSGDELAY
+                MOVE 1 TO WS-FLAG-FOUND
+              END-IF
+
+              IF WS-NOT-FOUND       *> Nenhum erro encontrado na entrada
+                 PERFORM CALCULA 
+
+                 IF WS-HB-COST NOT = WFS-HB-COST
+                    OR WS-DESK-COST NOT = WFS-DESK-COST
+                    PERFORM UPDATE-BROKE-COST
+                 END-IF
+
+                 DISPLAY COST-CALC-SCREEN
+
+                 CALL 'showmsg' USING "Confirma lancamento?",
+                                MSGYESNO, MSGDELAY, WS-QUESTION
+
+                 IF WS-QUESTION = "S"
+                    PERFORM UPD-REGISTER
+                    CALL 'showmsg' USING "Registro incluido",
+                                   MSGSTD, MSGDELAY
+                    ELSE 
+                        PERFORM CLEAR-LOCAL-FIELDS
+                 END-IF
+
+                 CALL 'showmsg' USING "Incluir novo registro",
+                                MSGYESNO, MSGDELAY, WS-QUESTION
+                 IF WS-QUESTION NOT = "S"
+                    MOVE "F" TO WS-STATUS
+                 END-IF
+              END-IF
+            
+              PERFORM CLEAR-LOCAL-FIELDS
+           END-PERFORM.
 
        ENDPROGRAM.
            STOP RUN.
@@ -766,6 +739,7 @@
            MOVE ZEROES TO WS-NET-OPR WS-TR-FEE WS-LIQUIDITY WS-TTA 
                           WS-REGISTER WS-BROKE-COST WS-TOT-TX WS-IRRF
                           WS-OUTROS WS-TOTAL-COSTS.
+           MOVE ZEROES TO WS-TOTAL-COSTS WS-NET WS-PM.
            EXIT.
 
        CLEAR-STK04-FIELDS.
