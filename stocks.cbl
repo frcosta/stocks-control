@@ -10,8 +10,8 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            COPY 'control_stk01'.
-           COPY 'control_custody'.
-           COPY 'control_register'.
+           COPY 'control_custody'.             *> STK02
+           COPY 'control_register'.            *> STK03
            COPY 'control_stk04'.
 
        DATA DIVISION.
@@ -77,12 +77,12 @@
            
 
        01 STK02-REGISTER-LOCAL.
-           03 WS-STK02-TICKER           PIC X(10)    OCCURS 100 TIMES.
-           03 WS-STK02-QTY              PIC 9(06)    OCCURS 100 TIMES.
-           03 WS-STK02-PRICE            PIC 9(04)V99 OCCURS 100 TIMES.
-           03 WS-STK02-BALANCE          PIC 9(07)V99 OCCURS 100 TIMES.
-           03 WS-STK02-TOT-BALANCE      PIC 9(08)V99.
-           03 WS-STK02-TOT-BALANCE-MASK PIC Z.ZZZ.ZZ9,99.
+           03 WS-STK02-TICKER           PIC X(10)     OCCURS 100 TIMES.
+           03 WS-STK02-QTY              PIC S9(06)    OCCURS 100 TIMES.
+           03 WS-STK02-PRICE            PIC 9(04)V99  OCCURS 100 TIMES.
+           03 WS-STK02-BALANCE          PIC S9(07)V99 OCCURS 100 TIMES.
+           03 WS-STK02-TOT-BALANCE      PIC S9(08)V99.
+      *     03 WS-STK02-TOT-BALANCE-MASK PIC Z.ZZZ.ZZ9,99.
 
        01 WS-FLAG-FOUND         PIC 9.
            88 WS-NOT-FOUND       VALUE 0.
@@ -120,16 +120,16 @@
 
        01 WS-STOCK.
            05 WS-TICKER         PIC X(10).
-           05 WS-QTY            PIC 9(6).
-           05 WS-PRICE          PIC 9(7)V99.
-           05 WS-PM             PIC 9(7)V99.
-           05 WS-ALLOC          PIC 9(7)V99.
-           05 WS-BALANCE        PIC 9(7)V99.
+           05 WS-QTY            PIC S9(6).
+           05 WS-PRICE          PIC 9(4)V99.
+           05 WS-PM             PIC 9(4)V99.
+           05 WS-ALLOC          PIC S9(7)V99.
+           05 WS-BALANCE        PIC S9(7)V99.
        01 WS-STOCK-MASK.
-           05 WS-QTY-MASK       PIC ZZZ.ZZZ.
+           05 WS-QTY-MASK       PIC -ZZZ.ZZZ.
            05 WS-PMA-MASK       PIC Z.ZZ9,99.
            05 WS-PRICE-MASK     PIC Z.ZZZ.ZZ9,99.
-           05 WS-BALANCE-MASK   PIC Z.ZZZ.ZZ9,99.
+           05 WS-BALANCE-MASK   PIC -Z.ZZZ.ZZ9,99.
        01 WS-TAXES.
            05 WS-ISS            PIC 9(3)V99.
            05 WS-PIS            PIC 9(3)V99.
@@ -256,22 +256,22 @@
            05 LINE 9 COL 5 VALUE "PREGAO   /  /  "        HIGHLIGHT.
            05        COL 21 VALUE "ATIVO"                 HIGHLIGHT.
            05        COL 38 VALUE "QTD"                   HIGHLIGHT.
-           05        COL 49 VALUE "PM"                    HIGHLIGHT.
-           05        COL 63 VALUE "TOTAL"                 HIGHLIGHT.
+           05        COL 50 VALUE "PM"                    HIGHLIGHT.
+           05        COL 62 VALUE "TOTAL"                 HIGHLIGHT.
 
            05        COL 12 PIC 99 USING WS-DIA           AUTO.
            05        COL 15 PIC 99 USING WS-MES           AUTO.
            05        COL 18 PIC 99 USING WS-ANO           AUTO.
            05        COL 27 PIC X(10) USING WS-TICKER.
-           05        COL 42 PIC ZZZZZZ USING WS-QTY.
-           05        COL 52 PIC ZZZZZZZ,ZZ USING WS-PRICE.
-           05        COL 69 PIC Z.ZZZ.ZZ9,99 FROM WS-BALANCE
+           05        COL 42 PIC -ZZZZZZ USING WS-QTY.
+           05        COL 53 PIC ZZZZ,ZZ USING WS-PRICE.
+           05        COL 68 PIC -Z.ZZZ.ZZ9,99 FROM WS-BALANCE
                                              REVERSE-VIDEO.
-           05 LINE 11 COL  5 VALUE "SEQ"          HIGHLIGHT UNDERLINE. 
-           05         COL 15 VALUE "ATIVO"        HIGHLIGHT UNDERLINE. 
-           05         COL 30 VALUE "QUANTIDADE"   HIGHLIGHT UNDERLINE. 
-           05         COL 50 VALUE "PRECO MEDIO"  HIGHLIGHT UNDERLINE. 
-           05         COL 69 VALUE "       TOTAL" HIGHLIGHT UNDERLINE. 
+           05 LINE 11 COL  5 VALUE "SEQ"           HIGHLIGHT UNDERLINE. 
+           05         COL 15 VALUE "ATIVO"         HIGHLIGHT UNDERLINE. 
+           05         COL 29 VALUE "QUANTIDADE"    HIGHLIGHT UNDERLINE. 
+           05         COL 49 VALUE "PRECO MEDIO"   HIGHLIGHT UNDERLINE. 
+           05         COL 68 VALUE "        TOTAL" HIGHLIGHT UNDERLINE. 
 
            05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK       UNDERLINE. 
 
@@ -386,7 +386,7 @@
                       PERFORM REG-BUY-SELL
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '2'
-                      PERFORM LST-CUSTODY
+      *               PERFORM LST-CUSTODY
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '4'
                       CALL 'SORTREG'
@@ -399,16 +399,26 @@
 
        DEF-CUSTODIA-INICIAL.
            PERFORM CLEAR-LOCAL-FIELDS.
+
+      *    Limpa array que acumula dados dos lancamentos dos ativos     
+           PERFORM VARYING WS-SCAN FROM 1 BY 1 UNTIL WS-SCAN = 100
+               MOVE ZEROES TO WS-STK02-TICKER(WS-SCAN)
+               MOVE ZEROES TO WS-STK02-QTY(WS-SCAN)
+               MOVE ZEROES TO WS-STK02-PRICE(WS-SCAN)
+               MOVE ZEROES TO WS-STK02-BALANCE(WS-SCAN)
+           END-PERFORM.
+
+
            DISPLAY CLEAR-SCREEN.
            DISPLAY DEF-DADOS-INICIAIS-SCR.
            ACCEPT DEF-DADOS-INICIAIS-SCR.
 
-           CALL 'showmsg' USING "Confirma dados iniciais??",
+           CALL 'showmsg' USING "Confirma dados iniciais?",
                           MSGYESNO, MSGDELAY, WS-QUESTION
 
            IF WS-QUESTION NOT = "S"
               EXIT PARAGRAPH
-              END-IF.
+           END-IF.
 
            DISPLAY DEF-DADOS-INICIAIS-SCR.
 
@@ -450,40 +460,38 @@
               CALL 'showmsg' USING "Confirma lancamento?",
                                MSGYESNO, MSGDELAY, WS-QUESTION
 
-              IF WS-QUESTION NOT = "S"
-                 EXIT PARAGRAPH
-              END-IF
+              IF WS-QUESTION = "S"
+                PERFORM FUNCT-VERIFICA-TICKER-REPETIDO
+                IF WS-NOT-FOUND 
+                  MOVE WS-TICKER  TO WS-STK02-TICKER(WS-POS-ARRAY)
+                  MOVE WS-QTY     TO WS-STK02-QTY(WS-POS-ARRAY)
+                                     WS-QTY-MASK
+                  MOVE WS-PRICE   TO WS-STK02-PRICE(WS-POS-ARRAY)
+                                     WS-PRICE-MASK
+                  MOVE WS-BALANCE TO WS-STK02-BALANCE(WS-POS-ARRAY)
+                                     WS-BALANCE-MASK
 
-              PERFORM FUNCT-VERIFICA-TICKER-REPETIDO
-              IF WS-NOT-FOUND 
-                MOVE WS-TICKER  TO WS-STK02-TICKER(WS-POS-ARRAY)
-                MOVE WS-QTY     TO WS-STK02-QTY(WS-POS-ARRAY)
-                                   WS-QTY-MASK
-                MOVE WS-PRICE   TO WS-STK02-PRICE(WS-POS-ARRAY)
-                                   WS-PRICE-MASK
-                MOVE WS-BALANCE TO WS-STK02-BALANCE(WS-POS-ARRAY)
-                                   WS-BALANCE-MASK
+                  IF WS-LN > 21
+                    MOVE 12 TO WS-LN
+                    DISPLAY CLEAR-SCREEN-PART-01
+                  END-IF
 
-                IF WS-LN > 21
-                   MOVE 12 TO WS-LN
-                   DISPLAY CLEAR-SCREEN-PART-01
+                  DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
+                  DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
+                  DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 31
+                  DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 48 
+                  DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 68 
+
+                  ADD 1 TO WS-LN WS-POS-ARRAY
+                ELSE
+                  CALL 'showmsg' USING "Ativo ja cadastrado",
+                                 MSGALERT, MSGDELAY
                 END-IF
-
-                DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
-                DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
-                DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 33
-                DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
-                DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69 
-
-                ADD 1 TO WS-LN WS-POS-ARRAY
-             ELSE
-              CALL 'showmsg' USING "Ativo ja cadastrado",
-                            MSGALERT, MSGDELAY
+                MOVE SPACES TO WS-TICKER
+                MOVE ZEROES TO WS-QTY WS-PRICE WS-BALANCE
+              ELSE  *> WS-QUESTION NOT = "S"
+                PERFORM CLEAR-LOCAL-FIELDS
               END-IF
-
-              MOVE SPACES TO WS-TICKER
-              MOVE ZEROES TO WS-QTY WS-PRICE WS-BALANCE
-
            END-PERFORM.
 
        FUNCT-VERIFICA-TICKER-REPETIDO.
@@ -545,9 +553,9 @@
 
              DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
              DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
-             DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 33
+             DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 32
              DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
-             DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 69
+             DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 68
 
              IF WS-LN < 21
                  ADD 1 TO WS-LN
@@ -739,7 +747,14 @@
            MOVE ZEROES TO WS-NET-OPR WS-TR-FEE WS-LIQUIDITY WS-TTA 
                           WS-REGISTER WS-BROKE-COST WS-TOT-TX WS-IRRF
                           WS-OUTROS WS-TOTAL-COSTS.
-           MOVE ZEROES TO WS-TOTAL-COSTS WS-NET WS-PM.
+           MOVE ZEROES TO WS-TOTAL-COSTS WS-NET WS-PM WS-BALANCE.
+
+           MOVE ZEROES TO WS-STK02-TOT-BALANCE.
+
+           MOVE ZEROES TO WS-PREJ-COM-INI WS-PREJ-DT-INI
+                          WS-PREJ-FII-INI.
+           MOVE ZEROES TO WS-IRRF-COM-INI WS-IRRF-DT-INI
+                          WS-IRRF-FII-INI.
            EXIT.
 
        CLEAR-STK04-FIELDS.
@@ -811,78 +826,6 @@
            END-EVALUATE.
            CLOSE STK02.
 
-
-
-
-       UPD-CUSTODY.
-           EXIT.
-      *     OPEN I-O STK02.
-      *     IF WS-STATUS-STK02 EQUAL TO "35"
-      *         CLOSE STK02
-      *         OPEN OUTPUT STK02
-      *         CLOSE STK02
-      *         OPEN I-O STK02
-      *     END-IF.
-      *     MOVE WS-TICKER TO WFS-STK02-TICKER.
-      *     READ STK02 KEY IS WFS-STK02-TICKER
-      *     EVALUATE WS-STATUS-STK02
-      *         WHEN "23"
-      *            MOVE WS-QTY    TO WFS-STK02-QTY
-      *            MOVE WS-PM     TO WFS-STK02-PMA
-      *            MOVE WS-NET    TO WFS-STK02-BALANCE
-      *            WRITE STK02-REGISTER   
-      *         WHEN "00"
-      *            MOVE WFS-STK02-QTY     TO WS-STK02-QTY
-      *            MOVE WFS-STK02-PMA     TO WS-STK02-PMA
-      *            MOVE WFS-STK02-BALANCE TO WS-STK02-BALANCE
-      *
-      *            IF WS-ORDER = "B" OR WS-ORDER = "b"
-      *               ADD WS-QTY TO WS-STK02-QTY
-      *               ADD WS-NET TO WS-STK02-BALANCE
-      *               MOVE WS-STK02-BALANCE TO WFS-STK02-BALANCE
-      *               MOVE WS-STK02-QTY TO WFS-STK02-QTY
-      *               DIVIDE WS-STK02-BALANCE BY WS-STK02-QTY GIVING
-      *                                          WFS-STK02-PMA
-      *            ELSE
-      *               SUBTRACT WS-QTY FROM WS-STK02-QTY GIVING
-      *                                          WFS-STK02-QTY
-      *            END-IF
-      *            REWRITE STK02-REGISTER
-      *     END-EVALUATE.
-      *     CLOSE STK02.
-
-       LST-CUSTODY.
-           DISPLAY CLEAR-SCREEN.
-           DISPLAY LIST-CUSTODY.
-      *     MOVE 5 TO WS-LN.
-      *     MOVE 0 TO WS-STK02-TOT-BALANCE.
-      *     OPEN INPUT STK02.
-      *     MOVE "00" TO WS-STATUS-STK02.
-      *     PERFORM UNTIL WS-STATUS-STK02 = "10"
-      *        READ STK02 NEXT RECORD
-      *          AT END
-      *            MOVE "10" TO WS-STATUS-STK02
-      *          NOT AT END
-      *            MOVE WFS-STK02-TICKER  TO WS-TICKER
-      *            MOVE WFS-STK02-QTY     TO WS-QTY-MASK
-      *            MOVE WFS-STK02-PMA     TO WS-PMA-MASK
-      *            MOVE WFS-STK02-BALANCE TO WS-BALANCE-MASK
-      *            ADD WFS-STK02-BALANCE TO WS-STK02-TOT-BALANCE
-      *            DISPLAY WS-TICKER   AT LINE WS-LN COLUMN 01
-      *            DISPLAY WS-QTY-MASK AT LINE WS-LN COLUMN 13
-      *            DISPLAY WS-PMA-MASK AT LINE WS-LN COLUMN 23
-      *            DISPLAY WS-BALANCE-MASK  AT LINE WS-LN COLUMN 37
-      *            ADD 1 TO WS-LN
-      *         END-READ
-      *     END-PERFORM.
-      *     CLOSE STK02.
-      *     ADD 1 TO WS-LN.
-      *     MOVE WS-STK02-TOT-BALANCE TO WS-STK02-TOT-BALANCE-MASK.
-      *     DISPLAY "Total Balance" AT LINE WS-LN COLUMN 1.
-      *     DISPLAY WS-STK02-TOT-BALANCE-MASK   AT LINE WS-LN COLUMN 37.
-      *     ACCEPT WS-SELECT-OPTION AT LINE 23 COLUMN 80.
-           EXIT.
-
        UPD-REGISTER.
 
            ACCEPT WS-TIME FROM TIME.
@@ -915,25 +858,4 @@
            WRITE STK03-REGISTER.
            CLOSE STK03.
            EXIT.
-
-      * MOSTRA-MSG-ALERT.
-      *     DISPLAY MESSAGE-ALERT-SCR.
-      *     MOVE 0 TO CURSOR-VAL.
-      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
-      *     CALL "C$SLEEP" USING WS-DELAY END-CALL.
-      *     MOVE 1 TO CURSOR-VAL.
-      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
-      *     DISPLAY MESSAGE-CLEAR.
-      *     EXIT.
-
-      * MOSTRA-MSG.
-      *     DISPLAY MESSAGE-SCR.
-      *     MOVE 0 TO CURSOR-VAL.
-      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
-      *     CALL "C$SLEEP" USING WS-DELAY END-CALL.
-      *     MOVE 1 TO CURSOR-VAL.
-      *     CALL "curs_set" USING BY VALUE CURSOR-VAL.
-      *     DISPLAY MESSAGE-CLEAR.
-      *     EXIT.
-
 
