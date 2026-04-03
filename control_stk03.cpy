@@ -1,3 +1,3 @@
-           SELECT STK03 ASSIGN "registers.dat"
+           SELECT STK03 ASSIGN "stk03.dat"
            ORGANIZATION IS LINE SEQUENTIAL
            FILE STATUS IS WS-STATUS-STK03.

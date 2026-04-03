@@ -1,6 +1,27 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. STOCKS.
        AUTHOR. Fabiano Costa.
+       DATE-WRITTEN. Mar/2026.
+       REMARKS.
+      *****************************************************************
+      * Controle de portfolio de ativos mobiliarios                   *
+      * -------------------------------------------                   *  
+      * Controle de custodia                                          *
+      * Calculo de IR                                                 *
+      *                                                               *
+      * Arquivos: stocks.cbl   - Programa principal                   *
+      *           fmsgs.cbl    - Controle de exibicao de mensagens    *
+      *              program-id showmsg                               *
+      *                                                               *
+      * Dados: stk01.dat       - Corretagens                          *
+      *        stk02.dat       - Custodia inicial                     *
+      *        stk03.dat       - Registros de compra e venda          *
+      *        stk04.dat       - Prejuizos e IRRF acumulados iniciais *
+      *        stk05.dat       - Custodia atual                       *
+      *                                                               *
+      * Alteracoes:                                                   *
+      *                                                               *
+      *****************************************************************
        ENVIRONMENT DIVISION.
        CONFIGURATION SECTION.
        SPECIAL-NAMES.
@@ -9,21 +30,24 @@
 
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           COPY 'control_stk01'.
-           COPY 'control_custody'.             *> STK02
-           COPY 'control_register'.            *> STK03
-           COPY 'control_stk04'.
+           COPY 'control_stk01'.   *> Corretagens
+           COPY 'control_stk02'.   *> Custodia inicial
+           COPY 'control_stk03'.   *> Registros de compra e venda
+           COPY 'control_stk04'.   *> Prejuizos e IRRF iniciais
+           COPY 'control_stk05'.   *> Custodia atual 
 
        DATA DIVISION.
        FILE SECTION.
        FD STK01.
            COPY 'stk01'.
        FD STK02.
-           COPY 'custody'.
+           COPY 'stk02'.
        FD STK03.
-           COPY 'register'.
+           COPY 'stk03'.
        FD STK04.
            COPY 'stk04'.
+       FD STK05.
+           COPY 'stk05'.
 
        WORKING-STORAGE SECTION.
        77 CURSOR-VAL            PIC S9(4) COMP VALUE 0.
@@ -32,91 +56,99 @@
        77 MSGDELAY              PIC 9V9999 VALUE 3,0. *> 3,0 seg
        77 WS-VALIDADO           PIC 9(02) VALUE 0.
        77 WS-MSG                PIC X(76)  VALUE SPACES.
-       77 WS-LN                 PIC 9(02).
-       77 WS-POS-ARRAY          PIC 9(3).
-       77 WS-CONTADOR           PIC 9(3).
        77 WS-CHAVE-PRIMARIA     PIC X(14).
        77 WS-CHK-STOCK          PIC X.
-       77 WS-STATUS-STK01       PIC X(02).
-       77 WS-STATUS-STK02       PIC X(02).
-       77 WS-STATUS-STK03       PIC X(02).
-       77 WS-STATUS-STK04       PIC X(02).
        77 WS-SELECT-OPTION      PIC X.
        77 WS-SYSTEM-TIME        PIC 9(08).
        77 WS-DRAWLINE           PIC X(80) VALUE ALL "_".
        77 WS-BLANK              PIC X(76) VALUE ALL " ".
        77 WS-FIM-ARQ            PIC X.
-       77 WS-SCAN               PIC 9(3).
        77 WS-STATUS             PIC X.
-       
+
+       01 WS-CONTADORES.
+           03 WS-LN             PIC 9(2).
+           03 WS-POS-ARRAY      PIC 9(3).
+           03 WS-CONTADOR       PIC 9(3).
+           03 WS-SCAN           PIC 9(3).
+
        01 WS-QUESTION           PIC X.
            88 WS-VALID-QUESTION VALUE 'S' 's' 'N' 'n'.
 
-
-
        01 CONSTS                PIC 9(1)V99999999.
-           78 WS-STOCK-TRF        VALUE 0,00005.
-           78 WS-STOCK-LIQ        VALUE 0,00022371.
-           78 WS-STOCK-TTA        VALUE 0,00002591.
-           78 WS-OPTION-TRF       VALUE 0,00037.
-           78 WS-OPTION-LIQ       VALUE 0,00027469.
-           78 WS-OPTION-REG       VALUE 0,00070.
-           78 WS-ISS-TX           VALUE 0,05.
-           78 WS-PIS-TX           VALUE 0,0065.
-           78 WS-COFINS-TX        VALUE 0,04.
-           78 WS-OUTROS-TX        VALUE 0,059.
-           78 WS-IRRF-DT          VALUE 0,01.
-           78 WS-IRRF-ST          VALUE 0,00005.
+           78 WS-STOCK-TRF      VALUE 0,00005.
+           78 WS-STOCK-LIQ      VALUE 0,00022371.
+           78 WS-STOCK-TTA      VALUE 0,00002591.
+           78 WS-OPTION-TRF     VALUE 0,00037.
+           78 WS-OPTION-LIQ     VALUE 0,00027469.
+           78 WS-OPTION-REG     VALUE 0,00070.
+           78 WS-ISS-TX         VALUE 0,05.
+           78 WS-PIS-TX         VALUE 0,0065.
+           78 WS-COFINS-TX      VALUE 0,04.
+           78 WS-OUTROS-TX      VALUE 0,059.
+           78 WS-IRRF-DT        VALUE 0,01.
+           78 WS-IRRF-ST        VALUE 0,00005.
 
        01 CONST-MSG             PIC X.
-           78 MSGSTD              VALUE 'S'.
-           78 MSGALERT            VALUE 'A'.
-           78 MSGVOID             VALUE 'V'.
-           78 MSGQUESTION         VALUE 'Q'.
-           78 MSGYESNO            VALUE 'Y'.
+      * Constantes utilizadas pelo sistema de mensagens (showmsg)
+           78 MSGSTD            VALUE 'S'.   *> Mensagens padrao
+           78 MSGALERT          VALUE 'A'.   *> Mensagens de alerta
+           78 MSGVOID           VALUE 'V'.   *> Aguarda [ENTER]
+           78 MSGQUESTION       VALUE 'Q'.   *> Aguarda resposta
+           78 MSGYESNO          VALUE 'Y'.   *> Retorna S ou N
            
 
-       01 STK02-REGISTER-LOCAL.
-           03 WS-STK02-TICKER           PIC X(10)     OCCURS 100 TIMES.
-           03 WS-STK02-QTY              PIC S9(06)    OCCURS 100 TIMES.
-           03 WS-STK02-PRICE            PIC 9(04)V99  OCCURS 100 TIMES.
-           03 WS-STK02-BALANCE          PIC S9(07)V99 OCCURS 100 TIMES.
-           03 WS-STK02-TOT-BALANCE      PIC S9(08)V99.
-      *     03 WS-STK02-TOT-BALANCE-MASK PIC Z.ZZZ.ZZ9,99.
+      * 01 STK02-REGISTER-LOCAL.
+      *     03 WS-STK02-TICKER        PIC X(10)     OCCURS 100 TIMES.
+      *     03 WS-STK02-QTY           PIC S9(06)    OCCURS 100 TIMES.
+      *     03 WS-STK02-PRICE         PIC 9(04)V99  OCCURS 100 TIMES.
+      *     03 WS-STK02-BALANCE       PIC S9(07)V99 OCCURS 100 TIMES.
+      *     03 WS-STK02-TOT-BALANCE   PIC S9(08)V99.
+       copy 'stk02_local'.
 
-       01 WS-FLAG-FOUND         PIC 9.
-           88 WS-NOT-FOUND       VALUE 0.
-           88 WS-FOUND           VALUE 1.
+       01 WS-FILE-STATUS.
+           05 WS-STATUS-STK01        PIC X(02).
+           05 WS-STATUS-STK02        PIC X(02).
+           05 WS-STATUS-STK03        PIC X(02).
+           05 WS-STATUS-STK04        PIC X(02).
+           05 WS-STATUS-STK05        PIC X(02).
 
-       01 WS-FLAG               PIC X.
-           88 WS-STOCK-SELECT     VALUE 'Y'.
-           88 WS-OPTION-SELECT    VALUE 'N'.
+       01 WS-FLAG-FOUND              PIC 9.
+           88 WS-NOT-FOUND           VALUE 0.
+           88 WS-FOUND               VALUE 1.
+
+       01 WS-FLAG                    PIC X.
+           88 WS-STOCK-SELECT        VALUE 'Y'.
+           88 WS-OPTION-SELECT       VALUE 'N'.
 
        01 WS-DATA.
-           05 WS-ANO            PIC 9(2).
-           05 WS-MES            PIC 9(2).
-           05 WS-DIA            PIC 9(2).
-       01 WS-DADOS-INICIAIS.
-           05 WS-ANO-INICIAL    PIC 9(2).
-           05 WS-MES-INICIAL    PIC 9(2).
-           05 WS-DIA-INICIAL    PIC 9(2).
-           05 WS-PREJ-COM-INI   PIC 9(6)V99.
-           05 WS-PREJ-DT-INI    PIC 9(6)V99.
-           05 WS-PREJ-FII-INI   PIC 9(6)V99.
-           05 WS-IRRF-COM-INI   PIC 9(6)V99.
-           05 WS-IRRF-DT-INI    PIC 9(6)V99.
-           05 WS-IRRF-FII-INI   PIC 9(6)V99.
-       01 WS-TIME.
-           05 WS-HORA           PIC 9(2).
-           05 WS-MINUTO         PIC 9(2).
-           05 WS-SEGUNDO        PIC 9(2).
+           05 WS-ANO                 PIC 9(2).
+           05 WS-MES                 PIC 9(2).
+           05 WS-DIA                 PIC 9(2).
 
-       01 WS-ORDER              PIC X.
-           88 WS-VALID-ORDER VALUE 'C', 'c', 'V', 'v'.
-       01 WS-HB                 PIC X.
-           88 WS-VALID-HB VALUE 'S', 's', 'N', 'n'.
-       01 WS-DT                 PIC X.
-           88 WS-VALID-DT VALUE 'S', 's', 'N', 'n'.
+       01 WS-DADOS-INICIAIS.
+           05 WS-ANO-INICIAL         PIC 9(2).
+           05 WS-MES-INICIAL         PIC 9(2).
+           05 WS-DIA-INICIAL         PIC 9(2).
+           05 WS-PREJ-COM-INI        PIC 9(6)V99.
+           05 WS-PREJ-DT-INI         PIC 9(6)V99.
+           05 WS-PREJ-FII-INI        PIC 9(6)V99.
+           05 WS-IRRF-COM-INI        PIC 9(6)V99.
+           05 WS-IRRF-DT-INI         PIC 9(6)V99.
+           05 WS-IRRF-FII-INI        PIC 9(6)V99.
+
+       01 WS-TIME.
+           05 WS-HORA                PIC 9(2).
+           05 WS-MINUTO              PIC 9(2).
+           05 WS-SEGUNDO             PIC 9(2).
+
+       01 WS-ORDER                   PIC X.
+           88 WS-VALID-ORDER         VALUE 'C', 'c', 'V', 'v'.
+
+       01 WS-HB                      PIC X.
+           88 WS-VALID-HB            VALUE 'S', 's', 'N', 'n'.
+
+       01 WS-DT                      PIC X.
+           88 WS-VALID-DT            VALUE 'S', 's', 'N', 'n'.
 
        01 WS-STOCK.
            05 WS-TICKER         PIC X(10).
@@ -125,23 +157,27 @@
            05 WS-PM             PIC 9(4)V99.
            05 WS-ALLOC          PIC S9(7)V99.
            05 WS-BALANCE        PIC S9(7)V99.
+
        01 WS-STOCK-MASK.
            05 WS-QTY-MASK       PIC -ZZZ.ZZZ.
            05 WS-PMA-MASK       PIC Z.ZZ9,99.
            05 WS-PRICE-MASK     PIC Z.ZZZ.ZZ9,99.
            05 WS-BALANCE-MASK   PIC -Z.ZZZ.ZZ9,99.
+
        01 WS-TAXES.
            05 WS-ISS            PIC 9(3)V99.
            05 WS-PIS            PIC 9(3)V99.
            05 WS-COFINS         PIC 9(3)V99.
            05 WS-OUTROS         PIC 9(3)V99.
            05 WS-TOT-TX         PIC 9(3)V99.
+
        01 WS-CLEARING-EXCHANGE.
            05 WS-NET-OPR        PIC 9(7)V99.
            05 WS-LIQUIDITY      PIC 9(4)V99.
            05 WS-REGISTER       PIC 9(4)V99.
            05 WS-TR-FEE         PIC 9(7)V99.
            05 WS-TTA            PIC 9(7)V99.
+
        01 WS-OTHERS.
            05 WS-KEY            PIC 9(12).
            05 WS-OPERATIONAL    PIC 9(4)V99.
@@ -151,8 +187,8 @@
            05 WS-IRRF           PIC 9(4)V99.
            05 WS-TOTAL-COSTS    PIC 9(7)V99.
            05 WS-BROKE-COST     PIC 9(4)V99.
-           05 WS-HB-COST        PIC 9(2)V99.
-           05 WS-DESK-COST      PIC 9(1)V99.
+           05 WS-HB-COST        PIC 9(2)V99   VALUE 4,90.
+           05 WS-DESK-COST      PIC 9(1)V99   VALUE 0,50.
            05 WS-NET            PIC 9(7)V99.
            
 
@@ -195,7 +231,7 @@
           05 LINE 14 COL 5 VALUE "Imposto de renda" UNDERLINE
                                   FOREGROUND-COLOR 1 HIGHLIGHT.
 
-          05 LINE 15 COL 5 VALUE "4.Fechar mes".
+          05 LINE 15 COL 5 VALUE "4.Processar".
           05 LINE 16 COL 5 VALUE "5.Acusar pagamento do imposto".
           05 LINE 18 COL 5 VALUE "Area de Trabalho" UNDERLINE
                                   FOREGROUND-COLOR 1 HIGHLIGHT.
@@ -276,11 +312,11 @@
            05 LINE 24 COL  5 PIC X(76) FROM WS-BLANK       UNDERLINE. 
 
        01 DEF-CUSTODIA-INICIAL-TITULO-SCR.
-           05 LINE 09 COL  5 VALUE "SEQ"          HIGHLIGHT UNDERLINE. 
-           05         COL 15 VALUE "ATIVO"        HIGHLIGHT UNDERLINE. 
-           05         COL 30 VALUE "QUANTIDADE"   HIGHLIGHT UNDERLINE. 
-           05         COL 50 VALUE "PRECO MEDIO"  HIGHLIGHT UNDERLINE. 
-           05         COL 69 VALUE "       TOTAL" HIGHLIGHT UNDERLINE. 
+           05 LINE 09 COL  5 VALUE "SEQ"           HIGHLIGHT UNDERLINE. 
+           05         COL 15 VALUE "ATIVO"         HIGHLIGHT UNDERLINE. 
+           05         COL 29 VALUE "QUANTIDADE"    HIGHLIGHT UNDERLINE. 
+           05         COL 49 VALUE "PRECO MEDIO"   HIGHLIGHT UNDERLINE. 
+           05         COL 68 VALUE "        TOTAL" HIGHLIGHT UNDERLINE. 
 
        01 COST-CALC-SCREEN.
            05 LINE 1  COL 5 PIC X(76) FROM WS-BLANK HIGHLIGHT UNDERLINE. 
@@ -354,14 +390,16 @@
        PROCEDURE DIVISION.
        LOAD-DATA.
            OPEN INPUT STK01.
-           IF WS-STATUS-STK01 IS EQUAL TO "35"
-             PERFORM CREATE-DEFAULT-FILE
-             GO TO LOAD-DATA
+           IF WS-STATUS-STK01 IS EQUAL TO "00"
+             READ STK01
+             MOVE WFS-HB-COST   TO WS-HB-COST
+             MOVE WFS-DESK-COST TO WS-DESK-COST
+             CLOSE STK01
+           ELSE
+             IF WS-STATUS-STK01 IS EQUAL TO "35"
+               PERFORM UPDATE-BROKE-COST
+             END-IF
            END-IF.
-           READ STK01.
-           MOVE WFS-HB-COST TO WS-HB-COST.
-           MOVE WFS-DESK-COST TO WS-DESK-COST.
-           CLOSE STK01.
 
            ACCEPT WS-DATA FROM DATE.
            MOVE WS-ANO TO WS-ANO-INICIAL.
@@ -389,13 +427,16 @@
       *               PERFORM LST-CUSTODY
                       MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '4'
-                      CALL 'SORTREG'
+                      PERFORM 'PROC00'
+                      MOVE SPACE TO WS-SELECT-OPTION
                   WHEN '6'
                       DISPLAY CLEAR-SCREEN
-                      GO TO ENDPROGRAM
+                      EXIT PARAGRAPH
+      *                GO TO ENDPROGRAM
               END-EVALUATE
            END-PERFORM
-           GO TO ENDPROGRAM.
+      *     GO TO ENDPROGRAM.
+           STOP RUN.
 
        DEF-CUSTODIA-INICIAL.
            PERFORM CLEAR-LOCAL-FIELDS.
@@ -553,8 +594,8 @@
 
              DISPLAY WS-POS-ARRAY    AT LINE WS-LN COLUMN  5
              DISPLAY WS-TICKER       AT LINE WS-LN COLUMN 15  
-             DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 32
-             DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 49 
+             DISPLAY WS-QTY-MASK     AT LINE WS-LN COLUMN 31
+             DISPLAY WS-PRICE-MASK   AT LINE WS-LN COLUMN 48 
              DISPLAY WS-BALANCE-MASK AT LINE WS-LN COLUMN 68
 
              IF WS-LN < 21
@@ -662,8 +703,8 @@
               PERFORM CLEAR-LOCAL-FIELDS
            END-PERFORM.
 
-       ENDPROGRAM.
-           STOP RUN.
+      * ENDPROGRAM.
+      *     STOP RUN.
 
        CALCULA.
       **** Check if ticker represents a stock or an option
@@ -725,14 +766,6 @@
 
            EXIT.
 
-       CREATE-DEFAULT-FILE.
-           OPEN OUTPUT STK01.
-           MOVE 4,90 TO WFS-HB-COST.
-           MOVE 0,50 TO WFS-DESK-COST.
-           WRITE STK01-REGISTER.
-           CLOSE STK01.
-           EXIT.
-
        UPDATE-BROKE-COST.
            OPEN OUTPUT STK01.
            MOVE WS-HB-COST TO WFS-HB-COST.
@@ -749,7 +782,7 @@
                           WS-OUTROS WS-TOTAL-COSTS.
            MOVE ZEROES TO WS-TOTAL-COSTS WS-NET WS-PM WS-BALANCE.
 
-           MOVE ZEROES TO WS-STK02-TOT-BALANCE.
+      *     MOVE ZEROES TO WS-STK02-TOT-BALANCE.
 
            MOVE ZEROES TO WS-PREJ-COM-INI WS-PREJ-DT-INI
                           WS-PREJ-FII-INI.
@@ -845,17 +878,23 @@
                OPEN OUTPUT STK03
            END-IF.
 
-           MOVE WS-KEY         TO STK03-KEY
-           MOVE WS-ORDER       TO STK03-ORDER.
-           MOVE WS-TICKER      TO STK03-TICKER.
-           MOVE WS-QTY         TO STK03-QTY.
-           MOVE WS-PRICE       TO STK03-PRICE.
-           MOVE WS-IRRF        TO STK03-IRRF.
-           MOVE WS-TOTAL-COSTS TO STK03-COST.
-           MOVE WS-NET         TO STK03-NET.
-           MOVE WS-PM          TO STK03-AVPRICE.
+           MOVE WS-KEY         TO WFS-STK03-KEY
+           MOVE WS-ORDER       TO WFS-STK03-ORDER.
+           MOVE WS-TICKER      TO WFS-STK03-TICKER.
+           MOVE WS-QTY         TO WFS-STK03-QTY.
+           MOVE WS-PRICE       TO WFS-STK03-PRICE.
+           MOVE WS-IRRF        TO WFS-STK03-IRRF.
+           MOVE WS-TOTAL-COSTS TO WFS-STK03-COST.
+           MOVE WS-NET         TO WFS-STK03-NET.
+           MOVE WS-PM          TO WFS-STK03-AVPRICE.
 
            WRITE STK03-REGISTER.
            CLOSE STK03.
            EXIT.
+
+       PROC00.
+           DISPLAY CLEAR-SCREEN.
+           CALL 'processa'.
+
+
 

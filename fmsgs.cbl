@@ -1,7 +1,18 @@
        Identification Division.
        Program-id. showmsg.
-
-      * Environment Division.
+       Remarks.
+      *****************************************************************
+      * LK-Msg  - Mensagem                                            *
+      * LK-Type - 'S' para mensagens padrao                           *
+      *           'A' para mensagens de alerta                        *
+      *           'V' aguarda pressionamento do [ENTER], sem retorno  *  
+      *           'Q' retorna resposta sem tratamento                 *
+      *           'Y' retorna S ou N                                  *
+      *                                                               *
+      * LK-Delay - Tempo de exibicao de mensagem em segundos          * 
+      * LK-Ret   - Retorno para os tipos V, Q, Y                      *
+      *                                                               *
+      *****************************************************************
 
        Data Division.
        Working-Storage Section.
@@ -23,7 +34,7 @@
            Display BLKLINE AT 2305.
 
            Evaluate LK-Type 
-               When 'S' 
+               When 'S'
                   Display LK-Msg AT 2305 WITH FOREGROUND-COLOR 3
                                               HIGHLIGHT
                When 'A' 

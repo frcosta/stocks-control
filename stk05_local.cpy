@@ -1,0 +1,6 @@
+       01 STK05-LOCAL-REGISTER.
+           05 WS-STK05-TICKER           PIC X(10)      OCCURS 100 TIMES.
+           05 WS-STK05-QTY              PIC S9(06)     OCCURS 100 TIMES.
+           05 WS-STK05-PRICE            PIC 9(04)V99   OCCURS 100 TIMEs.
+           05 WS-STK05-BALANCE          PIC S9(07)V99  OCCURS 100 TIMES.
+

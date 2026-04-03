@@ -1,4 +1,4 @@
-           SELECT STK02 ASSIGN TO "custody.dat"
+           SELECT STK02 ASSIGN TO "stk02.dat"
            ORGANIZATION IS INDEXED
            ACCESS MODE IS DYNAMIC
            RECORD KEY IS WFS-STK02-TICKER
