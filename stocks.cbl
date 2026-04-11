@@ -750,7 +750,7 @@
 
 
       **** Calculate Income Tax (snitch)
-           IF WS-ORDER = "S" OR WS-ORDER = "s"
+           IF WS-ORDER = "V" OR WS-ORDER = "v"
                IF WS-DT = "S" OR WS-DT = "s"
                    MULTIPLY WS-NET-OPR BY WS-IRRF-DT GIVING WS-IRRF
                ELSE
