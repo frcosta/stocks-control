@@ -828,36 +828,36 @@
            MOVE WFS-IRRF-FII-INI TO WS-IRRF-FII-INI.
            CLOSE STK04.
 
-       UPD-INITIAL-CUSTODY.
-           OPEN I-O STK02.
-           IF WS-STATUS-STK02 EQUAL TO "35"
-               CLOSE STK02
-               OPEN OUTPUT STK02
-               CLOSE STK02
-               OPEN I-O STK02
-           END-IF.
-
-           MOVE WS-TICKER TO WFS-STK02-TICKER.
-           READ STK02 KEY IS WFS-STK02-TICKER
-
-           MOVE WS-QTY    TO WFS-STK02-QTY
-           MOVE WS-PRICE  TO WFS-STK02-PRICE
-           MOVE WS-NET    TO WFS-STK02-BALANCE
- 
-           EVALUATE WS-STATUS-STK02
-               WHEN "23"
-                 WRITE STK02-REGISTER   
-                 CALL 'showmsg' USING "Novo ativo incluido com sucesso",
-                                MSGSTD, MSGDELAY
-               WHEN "00"
-                 REWRITE STK02-REGISTER
-                 CALL 'showmsg' USING "Ativo atualizado com sucesso",
-                                MSGSTD, MSGDELAY
-               WHEN OTHER 
-                 CALL 'showmsg' USING "Erro na inclusao do ativo",
-                                MSGALERT, MSGDELAY
-           END-EVALUATE.
-           CLOSE STK02.
+      * UPD-INITIAL-CUSTODY.
+      *     OPEN I-O STK02.
+      *     IF WS-STATUS-STK02 EQUAL TO "35"
+      *         CLOSE STK02
+      *         OPEN OUTPUT STK02
+      *         CLOSE STK02
+      *         OPEN I-O STK02
+      *     END-IF.
+      *
+      *     MOVE WS-TICKER TO WFS-STK02-TICKER.
+      *     READ STK02 KEY IS WFS-STK02-TICKER
+      *
+      *     MOVE WS-QTY    TO WFS-STK02-QTY
+      *     MOVE WS-PRICE  TO WFS-STK02-PRICE
+      *     MOVE WS-NET    TO WFS-STK02-BALANCE
+      * 
+      *     EVALUATE WS-STATUS-STK02
+      *         WHEN "23"
+      *           WRITE STK02-REGISTER   
+      *           CALL 'showmsg' USING "Novo ativo incluido com sucesso",
+      *                          MSGSTD, MSGDELAY
+      *         WHEN "00"
+      *           REWRITE STK02-REGISTER
+      *           CALL 'showmsg' USING "Ativo atualizado com sucesso",
+      *                          MSGSTD, MSGDELAY
+      *         WHEN OTHER 
+      *           CALL 'showmsg' USING "Erro na inclusao do ativo",
+      *                          MSGALERT, MSGDELAY
+      *     END-EVALUATE.
+      *     CLOSE STK02.
 
        UPD-REGISTER.
 
@@ -893,8 +893,7 @@
            EXIT.
 
        PROC00.
-           DISPLAY CLEAR-SCREEN.
-           CALL 'processa'.
+           CALL 'loadcustody'.
 
 
 
